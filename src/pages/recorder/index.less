@@ -1,0 +1,21 @@
+.recorderContainer {
+  width: calc(100vw - 8px);
+  height: calc(100vh - 8px);
+  .title {
+    margin-bottom: 25px;
+  }
+  .videoWrap {
+    width: 70%;
+    margin: 0px auto;
+    border-radius: 5px;
+    overflow: hidden;
+    line-height: 0;
+    border-radius: 8px; /* Rounded corners */
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2); /* Shadow effect */
+    transition: transform 0.3s, box-shadow 0.3s; /* Smooth transition */
+    &:hover {
+      transform: translateY(-5px); /* Lift effect on hover */
+      box-shadow: 0 8px 40px rgba(0, 0, 0, 0.3); /* Enhanced shadow on hover */
+    }
+  }
+}
