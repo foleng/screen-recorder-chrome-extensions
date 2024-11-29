@@ -31,3 +31,13 @@ const onLoad = () => {
 };
 
 window.onload = onLoad;
+
+
+import store from "@/extensions/store";
+
+// 订阅状态变化
+store.subscribe((state) => {
+  console.log("Content-script received state change:", state);
+  // 使用状态更新页面内容
+  document.body.innerHTML = `<h1>${state.user.name}</h1>`;
+});

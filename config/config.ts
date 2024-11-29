@@ -14,7 +14,21 @@ export default defineConfig({
     contentScripts: [
       { matches: ['<all_urls>'], entries: ['@/contentScripts/all'] },
     ],
-    permissions: ['desktopCapture', 'downloads', 'activeTab', 'tabs'],
+    permissions: [
+      'desktopCapture',
+      'downloads',
+      'activeTab',
+      'tabs',
+      'identity',
+      'activeTab',
+      'storage',
+      'unlimitedStorage',
+      'downloads',
+      'tabs',
+      'tabCapture',
+      'scripting',
+    ],
+
     icons: {
       16: 'logo/logo@16.png',
       32: 'logo/logo@32.png',
