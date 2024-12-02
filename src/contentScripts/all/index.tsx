@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client'; // React 18+
-import './style.less';
 import RecorderPopup from './components/Popup';
+import './style.less';
 
 // 定义一个根节点的容器并动态插入到 DOM 中
 const renderComponent = () => {
@@ -20,8 +20,10 @@ const renderComponent = () => {
   const root = ReactDOM.createRoot(container);
   root.render(
     <React.StrictMode>
-      <RecorderPopup />
-    </React.StrictMode>
+      <div className="wrap">
+        <RecorderPopup />
+      </div>
+    </React.StrictMode>,
   );
 };
 
@@ -32,12 +34,11 @@ const onLoad = () => {
 
 window.onload = onLoad;
 
-
-import store from "@/extensions/store";
+import store from '@/extensions/store';
 
 // 订阅状态变化
 store.subscribe((state) => {
-  console.log("Content-script received state change:", state);
+  console.log('Content-script received state change:', state);
   // 使用状态更新页面内容
   document.body.innerHTML = `<h1>${state.user.name}</h1>`;
 });

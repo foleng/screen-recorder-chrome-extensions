@@ -13,17 +13,17 @@ const RecordContent: React.FC<IRecordContent> = ({ mediaType }) => {
 
   // 向 Background Script 发送开始录屏的消息
   function startScreenRecording() {
-
     sendMessageToBackground<{ mediaType: MediaType }>({
       type: MessageTypeEnum.START_RECORDING,
       payload: { mediaType },
     });
-
   }
 
   function stop() {
-    chrome.runtime.sendMessage({
-      type: 'STOP_RECORDING',
+
+    sendMessageToBackground<{ mediaType: MediaType }>({
+      type: MessageTypeEnum.STOP_RECORDING,
+      payload: { mediaType },
     });
   }
 
