@@ -14,7 +14,9 @@ const RecorderPopup: React.FC = () => {
   }, [activeKey]);
 
   return (
-    <Draggable handle=".draggable-header" cancel=".no-drag">
+    <Draggable
+      defaultPosition={{x: 0, y: 0}}
+      handle=".draggable-header" cancel=".no-drag">
       <div
         style={{
           width: 300,

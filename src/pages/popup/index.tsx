@@ -1,26 +1,22 @@
-import React, { useEffect } from 'react';
+import store from '@/extensions/store';
+import { useEffect, useState } from 'react';
 import styles from './style.less';
-import store from "@/extensions/store";
 
 const Popup = () => {
+
+  const [count, setCount] = useState(0)
   useEffect(() => {
+    // 订阅状态变化
+    store.subscribe((state) => {
+      console.log("state", state);
+      setCount(state?.count)
+    });
 
-// 获取状态并显示
-const state = store.getState();
-document.getElementById('stateDisplay').textContent = `Name: ${state.user.name}, Age: ${state.user.age}`;
-
-// 订阅状态变化
-store.subscribe((state) => {
-  document.getElementById('stateDisplay').textContent = `Name: ${state.user.name}, Age: ${state.user.age}`;
-});
-
-    return () => {
-
-    };
+    return () => {};
   }, []);
   return (
     <div className={styles.app}>
-      <h1 className={styles.title}>pop222up page</h1>
+      <h1 className={styles.title}>{count}</h1>
     </div>
   );
 };

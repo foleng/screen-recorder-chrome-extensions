@@ -13,9 +13,6 @@ const Recorder = () => {
     defaultValue: false
   });
 
-  console.log(">>>>>>>>>>recordingState", recordingState);
-
-
   // 获取?type 的值
   useEffect(() => {
     const startRecorder = async () => {
