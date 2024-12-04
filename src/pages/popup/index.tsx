@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react';
 import styles from './style.less';
 
 const Popup = () => {
-
   const [count, setCount] = useState(0)
   useEffect(() => {
     // 订阅状态变化
@@ -16,6 +15,7 @@ const Popup = () => {
   }, []);
   return (
     <div className={styles.app}>
+      <Button>stop</Button>
       <h1 className={styles.title}>{count}</h1>
     </div>
   );
