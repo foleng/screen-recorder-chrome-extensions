@@ -1,5 +1,3 @@
-// zustand-like store using chrome.storage.local
-
 const store = {
   state: {}, // 这里存储当前的状态
   subscribers: [], // 存储所有的订阅者

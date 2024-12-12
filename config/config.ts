@@ -10,7 +10,11 @@ export default defineConfig({
       openInTab: true,
     },
     background: { service_worker: '@/background/index' },
-    popupUI: '@/pages/popup',
+    popupUI: {
+      page: '@/pages/popup',
+      title: '点击我吧',
+      type: 'browserAction',
+    },
     contentScripts: [
       { matches: ['<all_urls>'], entries: ['@/contentScripts/all'] },
     ],

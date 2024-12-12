@@ -15,8 +15,7 @@ const Popup = () => {
   }, []);
   return (
     <div className={styles.app}>
-      <Button>stop</Button>
-      <h1 className={styles.title}>{count}</h1>
+      <h1 className={styles.title}>1111{count}</h1>
     </div>
   );
 };
