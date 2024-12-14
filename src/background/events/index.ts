@@ -1,3 +1,4 @@
+import MessageService from '@/extensions/command/MessageService';
 import recordingStateMachine from '@/extensions/recorder/recordingStateMachine';
 import { createNewTab } from '@/utils';
 import { Message, ResponseType } from '@/utils/messaging';
@@ -5,6 +6,12 @@ import { CommandManager } from './command/CommandManager';
 
 const commandManager = new CommandManager();
 const stateMachine = recordingStateMachine();
+
+// 初始化消息服务
+MessageService.initialize();
+
+// 开始监听消息
+MessageService.listenRuntimeMessage();
 
 const handleMessage = async (
   message: Message,
