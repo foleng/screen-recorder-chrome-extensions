@@ -1,4 +1,23 @@
-const store = {
+// 定义 State 接口
+interface State {
+  [key: string]: any;  // 或者定义具体的状态结构
+}
+
+// 定义 Subscriber 类型
+type Subscriber = (state: State) => void;
+
+// 定义 Store 接口
+interface Store {
+  state: State;
+  subscribers: Subscriber[];
+  initialize: () => void;
+  setState: (newState: Partial<State>) => void;
+  getState: () => State;
+  subscribe: (callback: Subscriber) => () => void;
+  notifySubscribers: () => void;
+}
+
+const store: Store = {
   state: {}, // 这里存储当前的状态
   subscribers: [], // 存储所有的订阅者
 
@@ -23,7 +42,7 @@ const store = {
   },
 
   // 更新状态并同步到 chrome.storage.local
-  setState(newState) {
+  setState(newState: Partial<State>) {
     this.state = { ...this.state, ...newState };
     chrome.storage.local.set({ zustandState: this.state }, () => {
       this.notifySubscribers(); // 更新后通知所有订阅者
@@ -36,7 +55,7 @@ const store = {
   },
 
   // 订阅状态变化
-  subscribe(callback) {
+  subscribe(callback: Subscriber) {
     this.subscribers.push(callback);
     // 初始时立即调用一次
     callback(this.state);

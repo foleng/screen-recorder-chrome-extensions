@@ -11,8 +11,7 @@ export default defineConfig({
     },
     background: { service_worker: '@/background/index' },
     popupUI: {
-      page: '@/pages/popup',
-      title: '点击我吧',
+      title: '点击我吧1',
       type: 'browserAction',
     },
     contentScripts: [

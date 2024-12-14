@@ -17,12 +17,8 @@ export const getCurrentTab = async (): Promise<Tab | undefined> => {
   return tab as Tab | undefined; // 使用类型断言
 };
 
-
-// 定义创建标签页的选项接口
-interface CreateTabOptions extends chrome.tabs.CreateProperties {}
-
 // 创建新标签页的函数
-export const createNewTab = async (options: CreateTabOptions): Promise<chrome.tabs.Tab> => {
+export const createNewTab = async (options: chrome.tabs.CreateProperties): Promise<chrome.tabs.Tab> => {
   const tab = await chrome.tabs.create(options);
   return tab;
 };

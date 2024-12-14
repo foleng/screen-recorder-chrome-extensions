@@ -1,0 +1,46 @@
+diff --git a/node_modules/umi-plugin-extensions/lib/functions/configSchema.js b/node_modules/umi-plugin-extensions/lib/functions/configSchema.js
+index 12ba8bc..c4a3e93 100644
+--- a/node_modules/umi-plugin-extensions/lib/functions/configSchema.js
++++ b/node_modules/umi-plugin-extensions/lib/functions/configSchema.js
+@@ -166,7 +166,7 @@ var configSchema_default = (api) => {
+           popupUI: joi.alternatives(
+             joi.string(),
+             joi.object({
+-              page: joi.string().required(),
++              page: joi.string(),
+               title: joi.string(),
+               icon: iconSchema,
+               type: joi.string().valid("browserAction", "pageAction")
+diff --git a/node_modules/umi-plugin-extensions/lib/utils/manifest.js b/node_modules/umi-plugin-extensions/lib/utils/manifest.js
+index 8e6226b..f75dba6 100644
+--- a/node_modules/umi-plugin-extensions/lib/utils/manifest.js
++++ b/node_modules/umi-plugin-extensions/lib/utils/manifest.js
+@@ -67,16 +67,24 @@ var generateManifestFromConfig = (config) => {
+   }
+   const popup = {};
+   if (typeof popupUI === "string") {
+-    popup["action"] = {
+-      default_popup: "popup.html"
+-    };
++    const match = popupUI.match(/(.+\.html)/);
++    if (match) {
++      popup["action"] = {
++        default_popup: match[1]
++      };
++    }
+   }
+   if (typeof popupUI === "object") {
+     popup["action"] = {
+-      default_popup: "popup.html",
+       default_icon: popupUI.icon,
+       default_title: popupUI.title
+     };
++    if (popupUI.page) {
++      const match = popupUI.page.match(/(.+\.html)/);
++      if (match) {
++        popup["action"].default_popup = match[1];
++      }
++    }
+   }
+   const content_scripts = contentScripts.map(
+     (item) => {
