@@ -1,7 +1,7 @@
-import { Message, ResponseType } from '@/utils/messaging';
-import { CommandManager } from './command/CommandManager';
 import recordingStateMachine from '@/extensions/recorder/recordingStateMachine';
 import { createNewTab } from '@/utils';
+import { Message, ResponseType } from '@/utils/messaging';
+import { CommandManager } from './command/CommandManager';
 
 const commandManager = new CommandManager();
 const stateMachine = recordingStateMachine();
@@ -9,9 +9,8 @@ const stateMachine = recordingStateMachine();
 const handleMessage = async (
   message: Message,
   _sender: chrome.runtime.MessageSender,
-  sendResponse: (response: ResponseType) => void
+  sendResponse: (response: ResponseType) => void,
 ) => {
-
   const { type, payload } = message || {};
   const response: ResponseType = await commandManager.executeCommand(
     type,
@@ -31,19 +30,22 @@ const handleActionClick = async (tab: chrome.tabs.Tab) => {
     return;
   }
 
-  // 如果没有开始录制，在当前页面注入并显示 Popup
   if (tab.id) {
-    chrome.scripting.executeScript({
-      target: { tabId: tab.id },
-      func: () => {
-        // 创建并插入 Popup 容器
-        const container = document.createElement('div');
-        container.id = 'recorder-popup-container';
-        document.body.appendChild(container);
-
-        window.dispatchEvent(new CustomEvent('SHOW_RECORDER_POPUP'));
+    try {
+      // 检查是否是允许注入的页面
+      if (tab.url?.startsWith('chrome://') || tab.url?.startsWith('chrome-extension://')) {
+        console.log('Cannot inject scripts into chrome:// or extension pages');
+        return;
       }
-    });
+      await chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        func: () => {
+          window.dispatchEvent(new CustomEvent('SHOW_RECORDER_POPUP'));
+        },
+      });
+    } catch (error) {
+      console.error('Script injection failed:', error);
+    }
   }
 
   stateMachine.transition('START');
@@ -51,6 +53,5 @@ const handleActionClick = async (tab: chrome.tabs.Tab) => {
 
 export function initEvents() {
   chrome.runtime.onMessage.addListener(handleMessage);
-  console.log('initEvents');
   chrome.action.onClicked.addListener(handleActionClick);
 }

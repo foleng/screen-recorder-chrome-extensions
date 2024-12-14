@@ -6,7 +6,7 @@ export enum MessageTypeEnum {
 }
 
 // 消息类型定义
-export interface Message<T = {}> {
+export interface Message<T = Record<string, unknown>> {
   type: MessageTypeEnum;
   payload?: T; // 额外的参数
 }
@@ -31,7 +31,26 @@ export function sendMessageToBackground<T>(message: Message<T>): Promise<Respons
   });
 }
 
-// 向 content-script 发送消息
+/**
+ * 向指定标签页的 content-script 发送消息
+ *
+ * @example
+ * // 开始录制
+ * await sendMessageToContent(tabId, {
+ *   type: MessageTypeEnum.START_RECORDING,
+ *   payload: { mediaType: 'video' }
+ * });
+ *
+ * // 获取状态
+ * const response = await sendMessageToContent(tabId, {
+ *   type: MessageTypeEnum.GET_STATUS
+ * });
+ *
+ * // 停止录制
+ * await sendMessageToContent(tabId, {
+ *   type: MessageTypeEnum.STOP_RECORDING
+ * });
+ */
 export function sendMessageToContent<T>(tabId: number, message: Message<T>): Promise<ResponseType> {
   return new Promise((resolve, reject) => {
     chrome.tabs.sendMessage(tabId, message, (response: ResponseType) => {
