@@ -1,15 +1,198 @@
-import { HandlersManager } from './HandlersManager';
-import { Message, ResponseType } from './types';
+import {
+  Message,
+  ResponseType,
+  MessageTypeEnum,
+  HandlerType,
+  MessageHandler,
+  ConnectHandler,
+  TabUpdateHandler,
+  HandlerConfig,
+  HandlerRegistry,
+  RuntimeMessageHandler,
+  TabMessageHandler
+} from './types';
 
 class MessageService {
-  private static handlersManager: HandlersManager;
-  private static listeners: Map<MessageTypeEnum, Set<Function>> = new Map();
+  private static listeners: Map<string, Set<Function>> = new Map();
+  private static handlers: {
+    [HandlerType.RUNTIME_MESSAGE]: RuntimeMessageHandler[];
+    [HandlerType.TAB_MESSAGE]: TabMessageHandler[];
+    [HandlerType.CONNECT]: ConnectHandler[];
+    [HandlerType.TAB_UPDATE]: TabUpdateHandler[];
+  } = {
+    [HandlerType.RUNTIME_MESSAGE]: [],
+    [HandlerType.TAB_MESSAGE]: [],
+    [HandlerType.CONNECT]: [],
+    [HandlerType.TAB_UPDATE]: [],
+  };
 
-  static initialize() {
-    this.handlersManager = new HandlersManager();
+  private static handlerConfigs: { [key in HandlerType]: HandlerConfig } = {
+    [HandlerType.RUNTIME_MESSAGE]: {
+      type: HandlerType.RUNTIME_MESSAGE,
+      eventType: 'onMessage',
+      condition: (message: Message, type: string) => message.type === type,
+      register: (callback) => chrome.runtime.onMessage.addListener(callback)
+    },
+    [HandlerType.TAB_MESSAGE]: {
+      type: HandlerType.TAB_MESSAGE,
+      eventType: 'onMessage',
+      condition: (message: Message, type: string, sender) =>
+        message.type === type && !!sender.tab,
+      register: (callback) => chrome.runtime.onMessage.addListener(callback)
+    },
+    [HandlerType.CONNECT]: {
+      type: HandlerType.CONNECT,
+      eventType: 'onConnect',
+      condition: (port: chrome.runtime.Port, name: string) => port.name === name,
+      register: (callback) => chrome.runtime.onConnect.addListener(callback)
+    },
+    [HandlerType.TAB_UPDATE]: {
+      type: HandlerType.TAB_UPDATE,
+      eventType: 'onUpdated',
+      register: (callback) => chrome.tabs.onUpdated.addListener(callback)
+    }
+  };
+
+  // 注册处理器
+  static registerHandler(registry: HandlerRegistry): void {
+    const { type, handler } = registry;
+    switch (type) {
+      case HandlerType.RUNTIME_MESSAGE:
+        this.handlers[HandlerType.RUNTIME_MESSAGE].push(handler as RuntimeMessageHandler);
+        break;
+      case HandlerType.TAB_MESSAGE:
+        this.handlers[HandlerType.TAB_MESSAGE].push(handler as TabMessageHandler);
+        break;
+      case HandlerType.CONNECT:
+        this.handlers[HandlerType.CONNECT].push(handler as ConnectHandler);
+        break;
+      case HandlerType.TAB_UPDATE:
+        this.handlers[HandlerType.TAB_UPDATE].push(handler as TabUpdateHandler);
+        break;
+    }
   }
 
-  // 发送消息到指定目标（runtime 或 tabs）
+  // 批量注册处理器
+  static registerHandlers(registries: HandlerRegistry[]): void {
+    registries.forEach(registry => this.registerHandler(registry));
+  }
+
+  // 修改 addListener 方法以支持 handlers
+  private static addListener(
+    handlerType: HandlerType,
+    eventType: string,
+    callback: Function
+  ): () => void {
+    const key = `${handlerType}:${eventType}`;
+    if (!this.listeners.has(key)) {
+      this.listeners.set(key, new Set());
+
+      const config = this.handlerConfigs[handlerType];
+      const wrappedCallback = (...args: any[]) => {
+        const listeners = this.listeners.get(key);
+        if (!listeners) return false;
+
+        let keepChannelOpen = false;
+
+        // 先执行注册的 handlers
+        if (handlerType === HandlerType.RUNTIME_MESSAGE) {
+          const message = args[0] as Message;
+          if (message.type === eventType) {
+            for (const handler of this.handlers[HandlerType.RUNTIME_MESSAGE]) {
+              const result = handler.handleRuntimeMessage(...args);
+              if (result === true) keepChannelOpen = true;
+            }
+          }
+        }
+        // 处理 TAB_MESSAGE 类型的 handlers
+        if (handlerType === HandlerType.TAB_MESSAGE) {
+          const message = args[0] as Message;
+          if (message.type === eventType) {
+            for (const handler of this.handlers[HandlerType.TAB_MESSAGE]) {
+              const result = handler.handleTabMessage(...args);
+              if (result === true) keepChannelOpen = true;
+            }
+          }
+        }
+
+        // 处理 CONNECT 类型的 handlers
+        if (handlerType === HandlerType.CONNECT) {
+          const port = args[0] as chrome.runtime.Port;
+          if (port.name === eventType) {
+            for (const handler of this.handlers[HandlerType.CONNECT]) {
+              handler.handleConnect(port);
+            }
+          }
+        }
+
+        // 处理 TAB_UPDATE 类型的 handlers
+        if (handlerType === HandlerType.TAB_UPDATE) {
+          const [tabId, changeInfo, tab] = args;
+          if (changeInfo.status === eventType) {
+            for (const handler of this.handlers[HandlerType.TAB_UPDATE]) {
+              handler.handleTabUpdate(tabId, changeInfo, tab);
+            }
+          }
+        }
+
+        // 然后执行动态添加的监听器
+        if (!config.condition || config.condition(...args, eventType)) {
+          listeners.forEach(listener => {
+            const result = listener(...args);
+            if (result === true) keepChannelOpen = true;
+          });
+        }
+
+        return keepChannelOpen;
+      };
+
+      config.register(wrappedCallback);
+    }
+
+    const listeners = this.listeners.get(key)!;
+    listeners.add(callback);
+
+    return () => {
+      const listeners = this.listeners.get(key);
+      if (listeners) {
+        listeners.delete(callback);
+        if (listeners.size === 0) {
+          this.listeners.delete(key);
+        }
+      }
+    };
+  }
+
+  // 公共 API
+  static onRuntimeMessage<T = any>(
+    messageType: MessageTypeEnum,
+    callback: MessageHandler<T>
+  ): () => void {
+    return this.addListener(HandlerType.RUNTIME_MESSAGE, messageType, callback);
+  }
+
+  static onTabMessage<T = any>(
+    messageType: MessageTypeEnum,
+    callback: MessageHandler<T>
+  ): () => void {
+    return this.addListener(HandlerType.TAB_MESSAGE, messageType, callback);
+  }
+
+  static onConnect(
+    portName: string,
+    callback: ConnectHandler
+  ): () => void {
+    return this.addListener(HandlerType.CONNECT, portName, callback);
+  }
+
+  static onTabUpdate(
+    eventType: string,
+    callback: TabUpdateHandler
+  ): () => void {
+    return this.addListener(HandlerType.TAB_UPDATE, eventType, callback);
+  }
+
+  // 发送消息方法
   static sendMessage<T extends ResponseType = ResponseType>(
     message: Message,
     callback?: (response: T) => void,
@@ -27,7 +210,6 @@ class MessageService {
     }
   }
 
-  // 向特定标签页发送消息
   static sendTabMessage<T extends ResponseType = ResponseType>(
     tabId: number,
     message: Message,
@@ -36,93 +218,6 @@ class MessageService {
     chrome.tabs.sendMessage(tabId, message, (response: T) => {
       if (callback) callback(response);
     });
-  }
-
-  // 向某个标签页的特定 window 发送消息
-  static sendTabWindowMessage<T extends ResponseType = ResponseType>(
-    tabId: number,
-    message: Message,
-    callback?: (response: T) => void
-  ) {
-    chrome.tabs.sendMessage(tabId, message, (response: T) => {
-      if (callback) callback(response);
-    });
-  }
-
-  static get manager() {
-    return this.handlersManager;
-  }
-
-  // 监听相关方法
-  static listenRuntimeMessage() {
-    chrome.runtime.onMessage.addListener((message: Message, sender, sendResponse) => {
-      return this.handlersManager.handleRuntimeMessage(message, sender, sendResponse);
-    });
-  }
-
-  static listenTabMessage(tabId: number) {
-    chrome.runtime.onMessage.addListener((message: Message, sender, sendResponse) => {
-      if (sender.tab?.id === tabId) {
-        return this.handlersManager.handleTabMessage(message, sender, sendResponse);
-      }
-      return false;
-    });
-  }
-
-  static listenConnect() {
-    chrome.runtime.onConnect.addListener((port) => {
-      this.handlersManager.handleConnect(port);
-    });
-  }
-
-  static listenTabUpdated() {
-    chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-      this.handlersManager.handleTabUpdate(tabId, changeInfo, tab);
-    });
-  }
-
-  // 添加一个新方法用于直接监听特定类型的消息
-  static onMessage<T = any>(
-    messageType: MessageTypeEnum,
-    callback: (
-      message: Message,
-      sender: chrome.runtime.MessageSender,
-      sendResponse: (response: T) => void
-    ) => boolean | void
-  ): () => void {
-    if (!this.listeners.has(messageType)) {
-      this.listeners.set(messageType, new Set());
-    }
-
-    const listeners = this.listeners.get(messageType)!;
-    listeners.add(callback);
-
-    if (listeners.size === 1) {
-      // 第一个监听器，添加 chrome 监听器
-      chrome.runtime.onMessage.addListener((message: Message, sender, sendResponse) => {
-        if (message.type === messageType) {
-          let keepChannelOpen = false;
-          listeners.forEach(listener => {
-            const result = listener(message, sender, sendResponse);
-            if (result === true) keepChannelOpen = true;
-          });
-          return keepChannelOpen;
-        }
-        return false;
-      });
-    }
-
-    // 返回取消监听的函数
-    return () => {
-      const listeners = this.listeners.get(messageType);
-      if (listeners) {
-        listeners.delete(callback);
-        if (listeners.size === 0) {
-          this.listeners.delete(messageType);
-          // 可以选择是否要移除 chrome 监听器
-        }
-      }
-    };
   }
 }
 
