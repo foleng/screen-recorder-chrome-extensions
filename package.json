@@ -23,7 +23,7 @@
     "release": "semantic-release",
     "---------    ": "",
     "clean": "rm -rf es lib dist build coverage e2e/dist packages/.umi .eslintcache",
-    "postinstall": "max setup && patch-package",
+    "postinstall": "patch-package && max setup",
     "lint": "max lint",
     "tsc": "tsc -p tsconfig-check.json",
     "lint-staged": "lint-staged",

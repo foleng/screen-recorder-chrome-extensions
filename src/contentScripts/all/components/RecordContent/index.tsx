@@ -1,5 +1,4 @@
 import { MediaType } from '@/extensions/recorder';
-import { MessageTypeEnum, sendMessageToBackground } from '@/utils/messaging';
 import { Button, Tooltip } from 'antd';
 import React, { useState } from 'react';
 
@@ -13,7 +12,7 @@ const RecordContent: React.FC<IRecordContent> = ({ mediaType }) => {
 
   // 向 Background Script 发送开始录屏的消息
   function startScreenRecording() {
-    sendMessageToBackground<{ mediaType: MediaType }>({
+    MessageService.sendRuntimeMessage({
       type: MessageTypeEnum.START_RECORDING,
       payload: { mediaType },
     });

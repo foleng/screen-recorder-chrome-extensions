@@ -1,4 +1,4 @@
-// 定义消息类型枚举
+// 基础类型定义
 export enum MessageTypeEnum {
   START_RECORDING = "START_RECORDING",
   STOP_RECORDING = "STOP_RECORDING",
@@ -6,35 +6,31 @@ export enum MessageTypeEnum {
   SHOW_RECORDER_POPUP = "SHOW_RECORDER_POPUP",
 }
 
-// 消息类型定义
 export interface Message<T = Record<string, unknown>> {
   type: MessageTypeEnum;
   payload?: T;
 }
 
-// 响应类型定义
 export interface ResponseType {
   success: boolean;
   error?: string;
   data?: any;
 }
 
-// 定义各种事件的处理函数类型
+// 处理器类型定义
 export type MessageHandler<T = any> = (
   message: Message,
   sender: chrome.runtime.MessageSender,
   sendResponse: (response: T) => void
 ) => boolean | void;
 
-export type ConnectHandler = (port: chrome.runtime.Port) => void;
-
-export type TabUpdateHandler = (
+export type TabUpdateHandlerFn = (
   tabId: number,
   changeInfo: chrome.tabs.TabChangeInfo,
   tab: chrome.tabs.Tab
 ) => void;
 
-// 定义处理器类型枚举
+// 处理器类型枚举
 export enum HandlerType {
   RUNTIME_MESSAGE = 'runtimeMessage',
   TAB_MESSAGE = 'tabMessage',
@@ -42,33 +38,35 @@ export enum HandlerType {
   TAB_UPDATE = 'tabUpdate'
 }
 
-// 处理器配置类型
+// 处理器接口
+export interface BaseHandler {}
+
+export interface RuntimeMessageHandler extends BaseHandler {
+  handleRuntimeMessage: MessageHandler;
+}
+
+export interface TabMessageHandler extends BaseHandler {
+  handleTabMessage: MessageHandler;
+}
+
+export interface ConnectHandler extends BaseHandler {
+  handleConnect: (port: chrome.runtime.Port) => void;
+}
+
+export interface TabUpdateHandler extends BaseHandler {
+  handleTabUpdate: TabUpdateHandlerFn;
+}
+
+// 配置接口
 export interface HandlerConfig {
   type: HandlerType;
   eventType: string;
   condition?: (message: any, ...args: any[]) => boolean;
   register: (callback: Function) => void;
+  execute: (handler: BaseHandler, ...args: any[]) => any;
 }
 
-// 添加回处理器接口
-export interface RuntimeMessageHandler {
-  handleRuntimeMessage: MessageHandler;
-}
-
-export interface TabMessageHandler {
-  handleTabMessage: MessageHandler;
-}
-
-export interface ConnectHandler {
-  handleConnect: (port: chrome.runtime.Port) => void;
-}
-
-export interface TabUpdateHandler {
-  handleTabUpdate: TabUpdateHandler;
-}
-
-// 处理器注册接口
 export interface HandlerRegistry {
   type: HandlerType;
-  handler: RuntimeMessageHandler | TabMessageHandler | ConnectHandler | TabUpdateHandler;
+  handler: BaseHandler;
 }
