@@ -3,6 +3,7 @@ import { Message, ResponseType } from './types';
 
 class MessageService {
   private static handlersManager: HandlersManager;
+  private static listeners: Map<MessageTypeEnum, Set<Function>> = new Map();
 
   static initialize() {
     this.handlersManager = new HandlersManager();
@@ -78,6 +79,50 @@ class MessageService {
     chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
       this.handlersManager.handleTabUpdate(tabId, changeInfo, tab);
     });
+  }
+
+  // 添加一个新方法用于直接监听特定类型的消息
+  static onMessage<T = any>(
+    messageType: MessageTypeEnum,
+    callback: (
+      message: Message,
+      sender: chrome.runtime.MessageSender,
+      sendResponse: (response: T) => void
+    ) => boolean | void
+  ): () => void {
+    if (!this.listeners.has(messageType)) {
+      this.listeners.set(messageType, new Set());
+    }
+
+    const listeners = this.listeners.get(messageType)!;
+    listeners.add(callback);
+
+    if (listeners.size === 1) {
+      // 第一个监听器，添加 chrome 监听器
+      chrome.runtime.onMessage.addListener((message: Message, sender, sendResponse) => {
+        if (message.type === messageType) {
+          let keepChannelOpen = false;
+          listeners.forEach(listener => {
+            const result = listener(message, sender, sendResponse);
+            if (result === true) keepChannelOpen = true;
+          });
+          return keepChannelOpen;
+        }
+        return false;
+      });
+    }
+
+    // 返回取消监听的函数
+    return () => {
+      const listeners = this.listeners.get(messageType);
+      if (listeners) {
+        listeners.delete(callback);
+        if (listeners.size === 0) {
+          this.listeners.delete(messageType);
+          // 可以选择是否要移除 chrome 监听器
+        }
+      }
+    };
   }
 }
 

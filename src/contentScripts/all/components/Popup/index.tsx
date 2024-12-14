@@ -1,17 +1,37 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import Draggable from 'react-draggable';
 import MediaControlTabs, {
   MediaControlTabsProps,
   MediaType,
   options,
 } from '../MediaControlTabs';
+import { MessageService, MessageTypeEnum } from '@/extensions/handlers/types';
 
 const RecorderPopup: React.FC = () => {
   const [activeKey, setActiveKey] = useState<MediaControlTabsProps['value']>(MediaType.Screen);
+  const [visible, setVisible] = useState(false);
 
   const Content = useMemo(() => {
     return options.find((item) => item.value === activeKey)?.component;
   }, [activeKey]);
+
+  useEffect(() => {
+    // 添加监听器并获取清理函数
+    const removeListener = MessageService.onMessage(
+      MessageTypeEnum.SHOW_RECORDER_POPUP,
+      (message) => {
+        setVisible(true);
+        return false;
+      }
+    );
+
+    // 组件卸载时清理监听器
+    return removeListener;
+  }, []);
+
+  if (!visible) {
+    return null;
+  }
 
   return (
     <Draggable
