@@ -71,3 +71,8 @@ export const createRecorder = (type: MediaType, useSingleton = false): Recorder 
   return factory.create();
 };
 
+export enum MediaType {
+  Screen = 'screen',
+  Videos = 'videos',
+  Camera = 'camera'
+}

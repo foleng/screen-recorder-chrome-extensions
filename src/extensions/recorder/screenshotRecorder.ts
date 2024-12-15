@@ -1,14 +1,19 @@
 import { Recorder } from "./recorder";
-
+import recordingStateMachine from "./recordingStateMachine";
 export class ScreenshotRecorder extends Recorder {
   async startRecording(): Promise<void> {
     try {
-      this.stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-      const videoTrack = this.stream.getVideoTracks()[0];
-      const imageCapture = new (window as any).ImageCapture(videoTrack);
-      const image = await imageCapture.takePhoto();
-      const blob = await this.imageToBlob(image);
-      this.saveRecording(blob);
+      // 引入状态机
+      const stateMachine = recordingStateMachine();
+      stateMachine.transition('START');
+      if (stateMachine.currentState === 'RECORDING') {
+        this.stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+        const videoTrack = this.stream.getVideoTracks()[0];
+        const imageCapture = new (window as any).ImageCapture(videoTrack);
+        const image = await imageCapture.takePhoto();
+        const blob = await this.imageToBlob(image);
+        this.saveRecording(blob);
+      }
     } catch (error) {
       console.error("Screenshot capture failed:", error);
     }

@@ -1,3 +1,6 @@
+import recordingStateMachine from "./recordingStateMachine";
+
+const stateMachine = recordingStateMachine();
 export abstract class Recorder {
   protected mediaRecorder: MediaRecorder | null = null;
   protected recordedChunks: Blob[] = [];
@@ -14,12 +17,16 @@ export abstract class Recorder {
         reject('Recorder not initialized');
         return;
       }
-
-      this.mediaRecorder.stop();
-      this.stream?.getTracks().forEach((track) => track.stop()); // 停止所有流的轨道
-      const blob = new Blob(this.recordedChunks, { type: 'video/webm' });
-      this.recordedChunks = []; // 清空数据
-      resolve(blob);
+      // 引入状态机
+      const stateMachine = recordingStateMachine();
+      stateMachine.transition('STOP');
+      if (stateMachine.currentState === 'STOPPED') {
+        this.mediaRecorder.stop();
+        this.stream?.getTracks().forEach((track) => track.stop()); // 停止所有流的轨道
+        const blob = new Blob(this.recordedChunks, { type: 'video/webm' });
+        this.recordedChunks = []; // 清空数据
+        resolve(blob);
+      }
     });
   }
 
@@ -42,7 +49,10 @@ export abstract class Recorder {
 
   // 暂停录制
   pauseRecording(): void {
-    if (this.mediaRecorder && !this.isPaused) {
+    // 引入状态机
+    const stateMachine = recordingStateMachine();
+    stateMachine.transition('PAUSE');
+    if (stateMachine.currentState === 'PAUSED') {
       this.mediaRecorder.pause();
       this.isPaused = true;
       console.log('Recording paused.');
@@ -51,7 +61,10 @@ export abstract class Recorder {
 
   // 恢复录制
   resumeRecording(): void {
-    if (this.mediaRecorder && this.isPaused) {
+    // 引入状态机
+    const stateMachine = recordingStateMachine();
+    stateMachine.transition('RESUME');
+    if (stateMachine.currentState === 'RECORDING') {
       this.mediaRecorder.resume();
       this.isPaused = false;
       console.log('Recording resumed.');
@@ -60,18 +73,28 @@ export abstract class Recorder {
 
   // 重置录制器状态
   resetRecording(): void {
-    this.recordedChunks = [];
-    if (this.stream) {
-      this.stream.getTracks().forEach((track) => track.stop());
+    // 引入状态机
+    const stateMachine = recordingStateMachine();
+    stateMachine.transition('RESET');
+    if (stateMachine.currentState === 'IDLE') {
+      this.recordedChunks = [];
+      if (this.stream) {
+        this.stream.getTracks().forEach((track) => track.stop());
+      }
+      this.mediaRecorder = null;
+      this.stream = null;
     }
-    this.mediaRecorder = null;
-    this.stream = null;
   }
 
   // 删除当前录制的文件
   deleteRecording(): void {
-    this.resetRecording();
-    console.log('Recording deleted and reset.');
+    // 引入状态机
+    const stateMachine = recordingStateMachine();
+    stateMachine.transition('DELETE');
+    if (stateMachine.currentState === 'IDLE') {
+      this.resetRecording();
+      console.log('Recording deleted and reset.');
+    }
   }
 
   /**
@@ -80,5 +103,10 @@ export abstract class Recorder {
    */
   public getStream(): MediaStream | null {
     return this.stream;
+  }
+
+  // 监听录制状态
+  public on(event: string, listener: (state: string) => void): void {
+    stateMachine.on(event, listener);
   }
 }

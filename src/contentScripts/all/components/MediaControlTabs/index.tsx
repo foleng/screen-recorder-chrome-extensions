@@ -4,12 +4,7 @@ import React from 'react';
 import Record from '../Record';
 import Videos from '../Videos';
 import styles from './index.less';
-
-export enum MediaType {
-  Screen = 'screen',
-  Videos = 'videos',
-  Camera = 'camera'
-}
+import { MediaType } from '@/extensions/recorder';
 
 export interface MediaControlTabsProps {
   value?: MediaType; // 当前激活的选项

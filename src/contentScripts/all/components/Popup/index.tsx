@@ -13,7 +13,7 @@ const RecorderPopup: React.FC = () => {
   const [activeKey, setActiveKey] = useState<MediaControlTabsProps['value']>(MediaType.Screen);
   const [visible, setVisible] = useState(false);
   const dragRef = useRef<HTMLDivElement>(null);
-  const [position, setPosition] = useState({ x: 100, y: 100 });
+  const defaultPosition = { x: 100, y: 100 };
 
   const Content = useMemo(() => {
     return options.find((item) => item.value === activeKey)?.component;
@@ -37,7 +37,6 @@ const RecorderPopup: React.FC = () => {
 
   return (
     <div className={style.wrap}>
-      {/* 蒙层 */}
       <div
         className={style.overlay}
         onClick={() => setVisible(false)}
@@ -45,26 +44,25 @@ const RecorderPopup: React.FC = () => {
 
       <Draggable
         nodeRef={dragRef}
-        position={position}
-        onDrag={(e, data) => {
-          setPosition({ x: data.x, y: data.y });
-        }}
-        bounds="parent"
+        defaultPosition={defaultPosition}
         handle=".draggable-header"
+        bounds="body"
+        scale={1}
+        grid={[1, 1]}
+        enableUserSelectHack={false}
+        positionOffset={{ x: 0, y: 0 }}
+        defaultClassName={style.draggable}
       >
         <div
           ref={dragRef}
           className={style.popupContainer}
         >
-          {/* 可拖拽的头部 */}
           <div className={`${style.header} draggable-header`}>
-            Recorder Popup
+            <div className={style.dragHandle}>Recorder Popup</div>
           </div>
 
-          {/* 选项卡组件 */}
           <MediaControlTabs onChange={setActiveKey} />
 
-          {/* 渲染动态内容 */}
           <div className={style.content}>
             {Content ? <Content /> : null}
           </div>
@@ -74,5 +72,5 @@ const RecorderPopup: React.FC = () => {
   );
 };
 
-export default RecorderPopup;
+export default React.memo(RecorderPopup);
 
