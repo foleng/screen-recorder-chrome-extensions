@@ -6,6 +6,7 @@ import {
   RecordingTabHandler
 } from '@/extensions/handlers/RecordingHandlers';
 import recordingStateMachine from "@/extensions/recorder/recordingStateMachine";
+import { createNewTab } from "@/utils";
 
 const stateMachine = recordingStateMachine();
 
@@ -31,7 +32,6 @@ const isRestrictedUrl = (url?: string): boolean => {
 }
 
 const handleActionClick = async (tab: chrome.tabs.Tab) => {
-  debugger;
   const { id, url } = tab;
 
   // 如果当前正在录制，则暂停并跳转到编辑页面
@@ -50,11 +50,14 @@ const handleActionClick = async (tab: chrome.tabs.Tab) => {
       return;
     }
 
-    await MessageService.sendMessage({
-      type: MessageTypeEnum.SHOW_RECORDER_POPUP,
-    });
 
-    stateMachine.transition('START');
+    // 等待一小段时间确保内容脚本已加载
+    MessageService.sendTabMessage(
+      id,
+      MessageTypeEnum.SHOW_RECORDER_POPUP,
+    );
+
+    // stateMachine.transition('START');
   } catch (error) {
     console.error('Failed to show recorder popup:', error);
   }

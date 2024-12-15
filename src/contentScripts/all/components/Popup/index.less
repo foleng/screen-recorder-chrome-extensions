@@ -1,0 +1,49 @@
+.wrap {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9998;
+}
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.3);
+  z-index: 9998;
+}
+
+.popupContainer {
+  position: absolute;
+  z-index: 9999;
+  width: 300px;
+  padding: 20px;
+  border-radius: 12px;
+  background-color: #fff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  font-family: Arial, sans-serif;
+  user-select: none;
+
+  .header {
+    margin-bottom: 12px;
+    cursor: move;
+    font-weight: bold;
+    font-size: 16px;
+    text-align: center;
+    padding: 8px;
+    border-radius: 6px;
+    background-color: #f5f5f5;
+
+    &:hover {
+      background-color: #eee;
+    }
+  }
+
+  .content {
+    cursor: default;
+  }
+}

@@ -18,7 +18,7 @@ export interface ResponseType {
 }
 
 // 处理器类型定义
-export type MessageHandler<T = any> = (
+export type MessageHandlerFunction<T = any> = (
   message: Message,
   sender: chrome.runtime.MessageSender,
   sendResponse: (response: T) => void
@@ -35,18 +35,19 @@ export enum HandlerType {
   RUNTIME_MESSAGE = 'runtimeMessage',
   TAB_MESSAGE = 'tabMessage',
   CONNECT = 'connect',
-  TAB_UPDATE = 'tabUpdate'
+  TAB_UPDATE = 'tabUpdate',
+  ALL_MESSAGE = 'allMessage'
 }
 
 // 处理器接口
 export interface BaseHandler {}
 
 export interface RuntimeMessageHandler extends BaseHandler {
-  handleRuntimeMessage: MessageHandler;
+  handleRuntimeMessage: MessageHandlerFunction;
 }
 
 export interface TabMessageHandler extends BaseHandler {
-  handleTabMessage: MessageHandler;
+  handleTabMessage: MessageHandlerFunction;
 }
 
 export interface ConnectHandler extends BaseHandler {
@@ -55,6 +56,11 @@ export interface ConnectHandler extends BaseHandler {
 
 export interface TabUpdateHandler extends BaseHandler {
   handleTabUpdate: TabUpdateHandlerFn;
+}
+
+// 通用消息处理器接口
+export interface MessageHandler extends BaseHandler {
+  handleMessage: MessageHandlerFunction;
 }
 
 // 配置接口

@@ -19,14 +19,15 @@ class MessageService {
     [HandlerType.RUNTIME_MESSAGE]: {
       type: HandlerType.RUNTIME_MESSAGE,
       eventType: 'onMessage',
-      condition: (message: Message, type: string) => message.type === type,
+      condition: (message: Message, type: MessageTypeEnum) => message.type === type,
       register: (callback) => chrome.runtime.onMessage.addListener(callback),
       execute: (handler, ...args) => (handler as RuntimeMessageHandler).handleRuntimeMessage(...args)
     },
     [HandlerType.TAB_MESSAGE]: {
       type: HandlerType.TAB_MESSAGE,
       eventType: 'onMessage',
-      condition: (message: Message, type: string, sender) => message.type === type && !!sender.tab,
+      condition: (message: Message, type: MessageTypeEnum, sender: chrome.runtime.MessageSender) =>
+        message.type === type && !!sender?.tab,
       register: (callback) => chrome.runtime.onMessage.addListener(callback),
       execute: (handler, ...args) => (handler as TabMessageHandler).handleTabMessage(...args)
     },
@@ -42,6 +43,13 @@ class MessageService {
       eventType: 'onUpdated',
       register: (callback) => chrome.tabs.onUpdated.addListener(callback),
       execute: (handler, ...args) => (handler as TabUpdateHandler).handleTabUpdate(...args)
+    },
+    [HandlerType.ALL_MESSAGE]: {
+      type: HandlerType.ALL_MESSAGE,
+      eventType: 'onMessage',
+      condition: (message: Message, type: MessageTypeEnum) => message.type === type,
+      register: (callback) => chrome.runtime.onMessage.addListener(callback),
+      execute: (handler, ...args) => (handler as MessageHandler).handleMessage(...args)
     }
   };
 
@@ -58,7 +66,7 @@ class MessageService {
 
   private static addListener(
     handlerType: HandlerType,
-    eventType: string,
+    eventType: MessageTypeEnum,
     callback: Function
   ): () => void {
     const key = `${handlerType}:${eventType}`;
@@ -68,13 +76,16 @@ class MessageService {
       const config = this.handlerConfigs[handlerType];
       const wrappedCallback = (...args: any[]) => {
         const listeners = this.listeners.get(key);
-        if (!listeners) return false;
+        if (!listeners) {
+          return false;
+        }
 
         let keepChannelOpen = false;
 
         // 执行注册的 handlers
         const handlers = this.handlers.get(handlerType) || [];
-        if (handlers.length && (!config.condition || config.condition(...args, eventType))) {
+
+        if (handlers.length && (!config.condition || config.condition(args[0], eventType, ...args.slice(1)))) {
           for (const handler of handlers) {
             const result = config.execute(handler, ...args);
             if (result === true) keepChannelOpen = true;
@@ -82,7 +93,7 @@ class MessageService {
         }
 
         // 执行动态添加的监听器
-        if (!config.condition || config.condition(...args, eventType)) {
+        if (!config.condition || config.condition(args[0], eventType, ...args.slice(1))) {
           listeners.forEach(listener => {
             const result = listener(...args);
             if (result === true) keepChannelOpen = true;
@@ -138,13 +149,26 @@ class MessageService {
     return this.addListener(HandlerType.TAB_UPDATE, eventType, callback);
   }
 
+  static onMessage<T = any>(
+    messageType: MessageTypeEnum,
+    callback: MessageHandler<T>
+  ): () => void {
+    return this.addListener(HandlerType.ALL_MESSAGE, messageType, callback);
+  }
+
   // 发送消息方法
   static sendMessage<T extends ResponseType = ResponseType>(
-    message: Message,
-    callback?: (response: T) => void,
-    target: 'runtime' | 'tabs' = 'runtime',
-    tabId?: number
+    type: MessageTypeEnum,
+    payload?: Record<string, unknown>,
+    options?: {
+      callback?: (response: T) => void;
+      target?: 'runtime' | 'tabs';
+      tabId?: number;
+    }
   ): void {
+    const message: Message = { type, payload };
+    const { callback, target = 'runtime', tabId } = options || {};
+
     if (target === 'tabs' && tabId !== undefined) {
       chrome.tabs.sendMessage(tabId, message, callback);
     } else {
@@ -152,11 +176,23 @@ class MessageService {
     }
   }
 
-  static sendTabMessage<T extends ResponseType = ResponseType>(
-    tabId: number,
-    message: Message,
+  static sendRuntimeMessage<T extends ResponseType = ResponseType>(
+    type: MessageTypeEnum,
+    payload?: Record<string, unknown>,
     callback?: (response: T) => void
   ): void {
+    const message: Message = { type, payload };
+    chrome.runtime.sendMessage(message, callback);
+  };
+
+  // 发送消息到特定标签页
+  static sendTabMessage<T extends ResponseType = ResponseType>(
+    tabId: number,
+    type: MessageTypeEnum,
+    payload?: Record<string, unknown>,
+    callback?: (response: T) => void
+  ): void {
+    const message: Message = { type, payload };
     chrome.tabs.sendMessage(tabId, message, callback);
   }
 }

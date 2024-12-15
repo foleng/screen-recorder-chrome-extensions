@@ -20,9 +20,7 @@ const renderComponent = () => {
   const root = ReactDOM.createRoot(container);
   root.render(
     <React.StrictMode>
-      <div className="wrap">
-        <RecorderPopup />
-      </div>
+      <RecorderPopup />
     </React.StrictMode>,
   );
 };
