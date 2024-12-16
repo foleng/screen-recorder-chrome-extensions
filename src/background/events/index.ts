@@ -3,7 +3,6 @@ import { HandlerType, MessageTypeEnum } from '@/extensions/handlers/types';
 import {
   StartRecordingHandler,
   StopRecordingHandler,
-  RecordingTabHandler
 } from '@/extensions/handlers/RecordingHandlers';
 import recordingStateMachine from "@/extensions/recorder/recordingStateMachine";
 import { createNewTab } from "@/utils";
@@ -51,13 +50,11 @@ const handleActionClick = async (tab: chrome.tabs.Tab) => {
     }
 
 
-    // 等待一小段时间确保内容脚本已加载
     MessageService.sendTabMessage(
       id,
       MessageTypeEnum.SHOW_RECORDER_POPUP,
     );
 
-    // stateMachine.transition('START');
   } catch (error) {
     console.error('Failed to show recorder popup:', error);
   }

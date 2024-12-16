@@ -1,11 +1,13 @@
 import { createRecorder, MediaType } from '@/extensions/recorder';
-import { getQueryParam } from '@/utils';
 import { Col, Flex, Row, Typography } from 'antd';
 import { useEffect, useRef } from 'react';
 import { useSessionStorageState } from 'ahooks';
 import styles from './index.less';
+import store from '@/extensions/store';
 
 const { Title } = Typography;
+
+const recorder = createRecorder(MediaType.Screen, true);
 
 const Recorder = () => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -15,34 +17,20 @@ const Recorder = () => {
 
   // 获取?type 的值
   useEffect(() => {
-    const startRecorder = async () => {
-      const { mediaType } = getQueryParam();
-      if (mediaType) {
-        const recorder = createRecorder(mediaType as MediaType, true);
-
-        // 如果之前有录音状态，恢复录音
-        if (recordingState) {
-          await recorder.resumeRecording(); // 假设有 resumeRecording 方法
-        } else {
-          await recorder.startRecording(); // 等待录制开始
-        }
-
-        // 保存录音状态到 sessionStorage
-        setRecordingState(true); // 标记为正在录音
-
-        const stream = recorder.getStream();
-        if (videoRef.current && stream) {
-          videoRef.current.srcObject = stream;
-        }
+    store.subscribe((state) => {
+      const { recordingState } = state;
+      switch (recordingState) {
+        case 'RECORDING':
+          recorder.startRecording();
+          break;
+        case 'PAUSED':
+          recorder.pauseRecording();
+          break;
+        case 'STOPPED':
+          recorder.stopRecording();
+          break;
       }
-    };
-
-    startRecorder();
-
-    // // 清理函数
-    // return () => {
-    //   setRecordingState(false); // 组件卸载时清除状态
-    // };
+    });
   }, [recordingState, setRecordingState]);
 
   return (

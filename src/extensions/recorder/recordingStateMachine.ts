@@ -7,6 +7,7 @@ type RecordingEvent = 'START' | 'PAUSE' | 'RESUME' | 'STOP';
 interface StateMachine {
   currentState: RecordingState;
   transition: (event: RecordingEvent) => void;
+  on: (listener: (state: string) => void) => void;
 }
 
 type StateTransitions = {
@@ -75,15 +76,20 @@ const recordingStateMachine = (): StateMachine => {
   };
 
   // 监听录制状态
-  public on(event: string, listener: (state: string) => void): void {
-    stateProxy.on(event, listener);
-  }
+  const on = (listener: (state: string) => void): void => {
+    store.subscribe((state) => {
+      if (state.recordingState) {
+        listener(state.recordingState);
+      }
+    });
+  };
 
   return {
     get currentState() {
       return stateProxy.currentState;
     },
-    transition
+    transition,
+    on
   };
 };
 
