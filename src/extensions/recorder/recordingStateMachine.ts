@@ -74,11 +74,6 @@ const recordingStateMachine = (): StateMachine => {
     }
   };
 
-  // 监听录制状态
-  public on(event: string, listener: (state: string) => void): void {
-    stateProxy.on(event, listener);
-  }
-
   return {
     get currentState() {
       return stateProxy.currentState;

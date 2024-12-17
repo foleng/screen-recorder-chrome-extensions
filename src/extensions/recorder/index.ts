@@ -1,7 +1,13 @@
 import { ScreenRecorder } from './screenRecorder';
 import { CameraRecorder } from './cameraRecorder';
 import { Recorder } from './recorder'; // 基类
-import { MediaType } from '@/contentScripts/all/components/MediaControlTabs';
+
+
+export enum MediaType {
+  Screen = 'screen',
+  Videos = 'videos',
+  Camera = 'camera'
+}
 
 // 录制器工厂
 interface RecorderFactory {
@@ -71,8 +77,4 @@ export const createRecorder = (type: MediaType, useSingleton = false): Recorder 
   return factory.create();
 };
 
-export enum MediaType {
-  Screen = 'screen',
-  Videos = 'videos',
-  Camera = 'camera'
-}
+

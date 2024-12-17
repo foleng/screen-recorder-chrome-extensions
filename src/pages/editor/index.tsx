@@ -5,7 +5,56 @@ import styles from "./index.less"
 
 const { Header, Content, Footer, Sider } = Layout;
 
+import { useEffect, useState, useRef } from 'react';
+
+/**
+ * 自定义实现的 useSyncExternalStore
+ * @param subscribe 订阅外部存储的变化 (如 window.resize, online 状态等)
+ * @param getSnapshot 获取当前外部存储的状态值
+ */
+function useSyncExternalStore<T>(
+  subscribe: (callback: () => void) => () => void,
+  getSnapshot: () => T
+): T {
+  // 1️⃣ 先获取外部存储的当前值
+  const [state, setState] = useState(getSnapshot);
+
+  // 2️⃣ 用于存储快照的 ref，用于比较是否需要更新
+  const prevSnapshotRef = useRef<T>(state);
+
+  useEffect(() => {
+    // 3️⃣ 订阅外部存储的变化
+    console.log('useSyncExternalStore');
+
+    const checkForUpdates = () => {
+      const newSnapshot = getSnapshot();
+      console.log('newSnapshot', newSnapshot);
+      if (!Object.is(prevSnapshotRef.current, newSnapshot)) {
+        prevSnapshotRef.current = newSnapshot; // 记录最新的快照
+        setState(newSnapshot); // 更新组件状态
+      }
+    };
+
+    // 调用订阅函数，传入 `checkForUpdates`
+    const unsubscribe = subscribe(checkForUpdates);
+
+    // 组件卸载时，取消订阅
+    return () => unsubscribe();
+  }, [subscribe, getSnapshot]);
+
+  return state;
+}
+
+
+const subscribe = (callback: () => void) => {
+  window.addEventListener('resize', callback);
+  return () => window.removeEventListener('resize', callback); // 取消订阅
+};
+
+const getSnapshot = () => window.innerWidth;
+
 const LayoutComponent: React.FC = () => {
+  const width = useSyncExternalStore(subscribe, getSnapshot);
   const menuItems = [
     {
       title: '编辑',
@@ -40,10 +89,12 @@ const LayoutComponent: React.FC = () => {
       {/* 顶部导航 */}
       <Header style={{ background: '#f5f5f5', padding: '0 24px' }}>
         <div className="logo" style={{ float: 'left', fontSize: '18px', fontWeight: 'bold' }}>Screenity</div>
+        <div style={{ float: 'left', fontSize: '18px', fontWeight: 'bold' }}>{width}</div>
         <div style={{ float: 'right' }}>
           <Button type="link" style={{ margin: '0 8px' }}>帮助中心</Button>
           <Button type="primary" style={{ margin: '0 8px' }}>关注更新</Button>
         </div>
+
       </Header>
 
       {/* 主内容部分 */}
