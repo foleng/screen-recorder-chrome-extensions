@@ -10,7 +10,7 @@ type StateCreator<T> = (set: SetState<T>, get: GetState<T>) => T;
 type StoreApi<T> = {
   setState: SetState<T>;
   getState: GetState<T>;
-  subscribe: (listener: (state: T, prevState: T) => void) => () => void;
+  subscribe: (listener: () => void) => () => void;
 };
 
 export function createStore<T extends object>(
@@ -24,7 +24,13 @@ export function createStore<T extends object>(
   let state: T;
   const listeners = new Set<(state: T, prevState: T) => void>();
 
-  // 同步到 chrome.storage
+  // 添加一个简单的订阅函数，用于 useSyncExternalStore
+  const subscribe = (listener: () => void) => {
+    const wrappedListener = (state: T, prevState: T) => listener();
+    listeners.add(wrappedListener);
+    return () => listeners.delete(wrappedListener);
+  };
+
   const syncState = (newState: T) => {
     if (syncToStorage && storageKey) {
       chrome.storage.local.set({ [storageKey]: newState });
@@ -42,20 +48,12 @@ export function createStore<T extends object>(
         ? (nextState as T)
         : Object.assign({}, state, nextState);
 
-      // 同步到 storage
       syncState(state);
-
-      // 通知监听器
       listeners.forEach((listener) => listener(state, previousState));
     }
   };
 
   const getState: GetState<T> = () => state;
-
-  const subscribe = (listener: (state: T, prevState: T) => void) => {
-    listeners.add(listener);
-    return () => listeners.delete(listener);
-  };
 
   // 初始化状态
   const initialize = async () => {
@@ -86,32 +84,31 @@ export function createStore<T extends object>(
     });
   }
 
-  // 立即初始化
   initialize();
 
   return { setState, getState, subscribe };
 }
 
-// React Hook
-import { useEffect, useState } from 'react';
-
+// 使用 useSyncExternalStore 的新 hook
 export function useStore<T, U>(
   store: StoreApi<T>,
   selector: (state: T) => U = state => state as unknown as U
 ): U {
-  const [selectedState, setSelectedState] = useState(() => selector(store.getState()));
+  return useSyncExternalStore(
+    store.subscribe,
+    () => selector(store.getState()),
+    () => selector(store.getState()) // 服务端渲染的快照，这里使用同样的值
+  );
+}
 
-  useEffect(() => {
-    const unsubscribe = store.subscribe((state, prevState) => {
-      const newSelectedState = selector(state);
-      if (!Object.is(newSelectedState, selector(prevState))) {
-        setSelectedState(newSelectedState);
-      }
-    });
-    return unsubscribe;
-  }, [store, selector]);
-
-  return selectedState;
+// 创建一个支持异步初始化的 hook
+export function useAsyncStore<T, U>(
+  store: StoreApi<T>,
+  selector: (state: T) => U = state => state as unknown as U,
+  fallback: U
+): U {
+  const selectedState = useStore(store, selector);
+  return selectedState ?? fallback;
 }
 
 // 创建录制相关的 store
