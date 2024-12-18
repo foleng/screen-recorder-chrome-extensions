@@ -1,6 +1,7 @@
 import { Button, Tooltip } from 'antd';
 import React, { useState, useEffect } from 'react';
 import { MediaType } from '@/extensions/recorder';
+import MessageService from "@/extensions/handlers/MessageService";
 
 interface IRecordContent {
   mediaType: MediaType;
@@ -13,6 +14,12 @@ const RecordContent: React.FC<IRecordContent> = ({ mediaType }) => {
   // 向 Background Script 发送开始录屏的消息
   function startScreenRecording() {
     // 开启录制
+    MessageService.sendMessage({
+      type: MessageTypeEnum.START_RECORDING,
+      payload: {
+        mediaType,
+      },
+    });
   }
 
   function stop() {
@@ -68,18 +75,6 @@ const RecordContent: React.FC<IRecordContent> = ({ mediaType }) => {
           }}
         >
           Start recording
-        </Button>
-        <Button
-          type="primary"
-          block
-          onClick={stop}
-          style={{
-            background: '#0057FF',
-            borderRadius: 6,
-            height: 40,
-          }}
-        >
-          Stop recording
         </Button>
       </div>
 

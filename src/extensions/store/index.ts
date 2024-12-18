@@ -49,7 +49,6 @@ export function createStore<T extends object>(
         : Object.assign({}, state, nextState);
 
       syncState(state);
-      listeners.forEach((listener) => listener(state, previousState));
     }
   };
 
@@ -70,6 +69,10 @@ export function createStore<T extends object>(
     }
   };
 
+  const notifyListeners = (state: T, previousState: T) => {
+    listeners.forEach(listener => listener(state, previousState));
+  }
+
   // 监听 storage 变化
   if (syncToStorage && storageKey) {
     chrome.storage.onChanged.addListener((changes, areaName) => {
@@ -78,7 +81,7 @@ export function createStore<T extends object>(
         if (!Object.is(newState, state)) {
           const previousState = state;
           state = newState;
-          listeners.forEach((listener) => listener(state, previousState));
+          notifyListeners(state, previousState);
         }
       }
     });
