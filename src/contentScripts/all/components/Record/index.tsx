@@ -2,10 +2,20 @@ import React, { useState } from 'react';
 import { Tabs } from 'antd';
 import { DesktopOutlined, AppstoreOutlined, CameraOutlined, MobileOutlined } from '@ant-design/icons';
 import RecordContent from '../RecordContent';
+import { useStore, recordingStore, useAsyncStore } from '@/extensions/store';
 
 // Tab 内容组件
 const CaptureModeTabs: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>('screen');
+  const isRecording = useStore(recordingStore, state => state.isRecording);
+  const recordingTime = useStore(recordingStore, state => state.recordingTime);
+
+  // 如果需要处理异步初始化的情况
+  const mediaType = useAsyncStore(
+    recordingStore,
+    state => state.mediaType,
+    null
+  );
 
   // Tab 配置
   const tabConfig = [
