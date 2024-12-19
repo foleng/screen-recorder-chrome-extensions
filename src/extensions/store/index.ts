@@ -1,3 +1,5 @@
+import { useSyncExternalStore } from 'react';
+
 type SetState<T> = (
   partial: T | Partial<T> | ((state: T) => T | Partial<T>),
   replace?: boolean
@@ -38,6 +40,7 @@ export function createStore<T extends object>(
   };
 
   const setState: SetState<T> = (partial, replace = false) => {
+    debugger;
     const nextState = typeof partial === 'function'
       ? (partial as (state: T) => T)(state)
       : partial;
@@ -57,6 +60,7 @@ export function createStore<T extends object>(
   // 初始化状态
   const initialize = async () => {
     if (syncToStorage && storageKey) {
+      console.log("initialize", storageKey);
       const result = await chrome.storage.local.get(storageKey);
       if (result[storageKey]) {
         state = result[storageKey];
@@ -76,11 +80,13 @@ export function createStore<T extends object>(
   // 监听 storage 变化
   if (syncToStorage && storageKey) {
     chrome.storage.onChanged.addListener((changes, areaName) => {
+      console.log("onChanged", changes, areaName);
       if (areaName === 'local' && changes[storageKey]) {
         const newState = changes[storageKey].newValue;
         if (!Object.is(newState, state)) {
           const previousState = state;
           state = newState;
+          console.log("state", state);
           notifyListeners(state, previousState);
         }
       }
@@ -91,6 +97,16 @@ export function createStore<T extends object>(
 
   return { setState, getState, subscribe };
 }
+
+// 定义 createImpl 函数，接收 createState 函数作为参数
+const createImpl = (createState: StateCreator<T>) => {
+    // 调用 createStore 函数创建状态管理器
+    const api = createStore(createState);
+    // 返回一个函数，该函数将 api 对象传递给 useStore 函数
+    return (selector: (state: T) => U) => useStore(api, selector)
+}
+
+export const create = (createState: StateCreator<T>, selector: (state: T) => U) => createImpl(createState, selector);
 
 // 使用 useSyncExternalStore 的新 hook
 export function useStore<T, U>(
@@ -159,4 +175,3 @@ export const popupStore = createStore<PopupState>(
     syncToStorage: true
   }
 );
-

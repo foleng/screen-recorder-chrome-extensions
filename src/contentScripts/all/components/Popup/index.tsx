@@ -8,7 +8,7 @@ const RecorderPopup: React.FC = () => {
   const dragRef = useRef<HTMLDivElement>(null);
   const visible = useStore(popupStore, state => state.visible);
   const position = useStore(popupStore, state => state.position);
-  const setPosition = useStore(popupStore, state => state.setPosition);
+  // const setPosition = useStore(popupStore, state => state.setPosition);
 
   if (!visible) return null;
 
@@ -22,7 +22,7 @@ const RecorderPopup: React.FC = () => {
       <Draggable
         nodeRef={dragRef}
         position={position}
-        onDrag={(e, data) => setPosition({ x: data.x, y: data.y })}
+        // onDrag={(e, data) => setPosition({ x: data.x, y: data.y })}
         bounds="body"
         handle=".draggable-header"
       >

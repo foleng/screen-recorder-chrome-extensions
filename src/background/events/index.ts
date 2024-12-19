@@ -6,6 +6,7 @@ import {
 } from '@/extensions/handlers/RecordingHandlers';
 import recordingStateMachine from "@/extensions/recorder/recordingStateMachine";
 import { createNewTab } from "@/utils";
+import { popupStore } from "@/extensions/store";
 
 const stateMachine = recordingStateMachine();
 
@@ -32,6 +33,7 @@ const isRestrictedUrl = (url?: string): boolean => {
 
 const handleActionClick = async (tab: chrome.tabs.Tab) => {
   const { id, url } = tab;
+  console.log("handleActionClick", id, url);
 
   // 如果当前正在录制，则暂停并跳转到编辑页面
   if (stateMachine.currentState === 'RECORDING') {
@@ -49,7 +51,7 @@ const handleActionClick = async (tab: chrome.tabs.Tab) => {
       return;
     }
 
-
+    popupStore.setState({ visible: true });
     MessageService.sendTabMessage(
       id,
       MessageTypeEnum.SHOW_RECORDER_POPUP,
