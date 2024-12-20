@@ -8,7 +8,9 @@ const RecorderPopup: React.FC = () => {
   const dragRef = useRef<HTMLDivElement>(null);
   const visible = useStore(popupStore, state => state.visible);
   const position = useStore(popupStore, state => state.position);
-  // const setPosition = useStore(popupStore, state => state.setPosition);
+  const setPosition = useStore(popupStore, state => state.setPosition);
+  console.log('position', position, setPosition, visible);
+
 
   if (!visible) return null;
 

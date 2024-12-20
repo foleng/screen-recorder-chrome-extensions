@@ -15,6 +15,12 @@ type StoreApi<T> = {
   subscribe: (listener: () => void) => () => void;
 };
 
+function stripFunctions<T>(state: T): Partial<T> {
+  return Object.fromEntries(
+    Object.entries(state).filter(([_, value]) => typeof value !== 'function')
+  ) as Partial<T>;
+}
+
 export function createStore<T extends object>(
   createState: StateCreator<T>,
   options: {
@@ -34,13 +40,21 @@ export function createStore<T extends object>(
   };
 
   const syncState = (newState: T) => {
+    console.log('syncState', newState, syncToStorage, storageKey);
     if (syncToStorage && storageKey) {
-      chrome.storage.local.set({ [storageKey]: newState });
+      const stateToStore = stripFunctions(newState);
+      console.log('stateToStore', stateToStore);
+      chrome.storage.local.set({ [storageKey]: stateToStore }, () => {
+        if (chrome.runtime.lastError) {
+          console.error('Error setting storage:', chrome.runtime.lastError);
+        } else {
+          console.log('Storage set successfully');
+        }
+      });
     }
   };
 
   const setState: SetState<T> = (partial, replace = false) => {
-    debugger;
     const nextState = typeof partial === 'function'
       ? (partial as (state: T) => T)(state)
       : partial;
@@ -50,21 +64,22 @@ export function createStore<T extends object>(
       state = replace
         ? (nextState as T)
         : Object.assign({}, state, nextState);
-
+      console.log('state', state);
       syncState(state);
     }
   };
 
   const getState: GetState<T> = () => state;
 
-  // 初始化状态
   const initialize = async () => {
     if (syncToStorage && storageKey) {
-      console.log("initialize", storageKey);
       const result = await chrome.storage.local.get(storageKey);
+      console.log('result', result);
       if (result[storageKey]) {
-        state = result[storageKey];
+        console.log('result[storageKey]', result[storageKey]);
+        state = { ...result[storageKey], ...createState(setState, getState) };
       } else {
+        console.log('createState');
         state = createState(setState, getState);
         syncState(state);
       }
@@ -80,13 +95,11 @@ export function createStore<T extends object>(
   // 监听 storage 变化
   if (syncToStorage && storageKey) {
     chrome.storage.onChanged.addListener((changes, areaName) => {
-      console.log("onChanged", changes, areaName);
       if (areaName === 'local' && changes[storageKey]) {
         const newState = changes[storageKey].newValue;
         if (!Object.is(newState, state)) {
           const previousState = state;
-          state = newState;
-          console.log("state", state);
+          state = { ...newState, ...createState(setState, getState) };
           notifyListeners(state, previousState);
         }
       }
