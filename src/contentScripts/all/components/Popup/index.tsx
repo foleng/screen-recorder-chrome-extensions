@@ -7,7 +7,6 @@ import style from './index.less';
 const RecorderPopup: React.FC = () => {
   const dragRef = useRef<HTMLDivElement>(null);
   const visible = useStore(popupStore, (state) => state.visible);
-  // const status = useStore(popupStore, (state) => state.status);
 
   if (!visible) return null;
 

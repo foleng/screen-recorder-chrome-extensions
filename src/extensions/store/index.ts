@@ -36,12 +36,18 @@ export function createStore<T extends object>(
   const subscribe = (listener: () => void) => {
     const wrappedListener = (state: T, prevState: T) => listener();
     listeners.add(wrappedListener);
+    console.log('subscribe', wrappedListener, listeners);
     return () => listeners.delete(wrappedListener);
   };
 
   const syncState = (newState: T) => {
     if (syncToStorage && storageKey) {
       const stateToStore = stripFunctions(newState);
+      console.log('Syncing state to storage:', {
+        key: storageKey,
+        state: stateToStore,
+        timestamp: Date.now()
+      });
       chrome.storage.local.set({ [storageKey]: stateToStore });
     }
   };
@@ -77,22 +83,46 @@ export function createStore<T extends object>(
   };
 
   const notifyListeners = (state: T, previousState: T) => {
+    console.log('notifyListeners', state, previousState, listeners, listeners.size);
     listeners.forEach((listener) => listener(state, previousState));
   };
 
+  let storageListener: ((changes: object, areaName: string) => void) | null = null;
+
   // 监听 storage 变化
   if (syncToStorage && storageKey) {
-    chrome.storage.onChanged.addListener((changes, areaName) => {
-      console.log('changes', changes, areaName);
+    // 添加调试日志
+    console.log('[Store Debug] Setting up storage listener for:', storageKey);
+
+    // 移除之前的监听器（如果存在）
+    if (storageListener) {
+      console.log('[Store Debug] Removing existing listener');
+      chrome.storage.onChanged.removeListener(storageListener);
+    }
+
+    // 创建新的监听器
+    storageListener = (changes: { [key: string]: chrome.storage.StorageChange }, areaName: string) => {
+      // 只处理与当前 store 相关的 key 的变化
       if (areaName === 'local' && changes[storageKey]) {
-        const newState = changes[storageKey].newValue;
-        if (!Object.is(newState, state)) {
+        console.log('[Store Debug] Storage change detected for:', {
+          key: storageKey,
+          newValue: changes[storageKey].newValue,
+          listenerInstance: Math.random()
+        });
+
+        const newValue = changes[storageKey].newValue;
+        // 避免不必要的更新
+        if (!Object.is(newValue, stripFunctions(state))) {
           const previousState = state;
-          state = { ...createState(setState, getState), ...newState };
+          state = { ...createState(setState, getState), ...newValue };
           notifyListeners(state, previousState);
         }
       }
-    });
+    };
+
+    // 添加监听器
+    console.log('[Store Debug] Adding new listener');
+    chrome.storage.onChanged.addListener(storageListener);
   }
 
   initialize();
@@ -121,7 +151,7 @@ export function useStore<T, U>(
   return useSyncExternalStore(
     store.subscribe,
     () => selector(store.getState()),
-    () => selector(store.getState()), // 服务端渲染的快照，这里使用同样的值
+    () => selector(store.getState()), // 服���端渲染的快照，这里使用同样的值
   );
 }
 
