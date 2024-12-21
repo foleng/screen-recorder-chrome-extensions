@@ -1,16 +1,13 @@
+import { popupStore, useStore } from '@/extensions/store';
 import React, { useRef } from 'react';
 import Draggable from 'react-draggable';
 import MediaControlTabs from '../MediaControlTabs';
-import { useStore, popupStore } from '@/extensions/store';
 import style from './index.less';
 
 const RecorderPopup: React.FC = () => {
   const dragRef = useRef<HTMLDivElement>(null);
-  const visible = useStore(popupStore, state => state.visible);
-  const position = useStore(popupStore, state => state.position);
-  const setPosition = useStore(popupStore, state => state.setPosition);
-  console.log('position', position, setPosition, visible);
-
+  const visible = useStore(popupStore, (state) => state.visible);
+  // const status = useStore(popupStore, (state) => state.status);
 
   if (!visible) return null;
 
@@ -23,24 +20,17 @@ const RecorderPopup: React.FC = () => {
 
       <Draggable
         nodeRef={dragRef}
-        position={position}
-        // onDrag={(e, data) => setPosition({ x: data.x, y: data.y })}
         bounds="body"
         handle=".draggable-header"
       >
-        <div
-          ref={dragRef}
-          className={style.popupContainer}
-        >
+        <div ref={dragRef} className={style.popupContainer}>
           <div className={`${style.header} draggable-header`}>
             <div className={style.dragHandle}>Recorder Popup</div>
           </div>
 
           <MediaControlTabs />
 
-          <div className={style.content}>
-            {/* ... 其他代码保持不变 ... */}
-          </div>
+          <div className={style.content}>{/* ... 其他代码保持不变 ... */}</div>
         </div>
       </Draggable>
     </div>
@@ -48,4 +38,3 @@ const RecorderPopup: React.FC = () => {
 };
 
 export default React.memo(RecorderPopup);
-

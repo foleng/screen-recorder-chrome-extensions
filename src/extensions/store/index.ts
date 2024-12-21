@@ -2,7 +2,7 @@ import { useSyncExternalStore } from 'react';
 
 type SetState<T> = (
   partial: T | Partial<T> | ((state: T) => T | Partial<T>),
-  replace?: boolean
+  replace?: boolean,
 ) => void;
 
 type GetState<T> = () => T;
@@ -17,16 +17,16 @@ type StoreApi<T> = {
 
 function stripFunctions<T>(state: T): Partial<T> {
   return Object.fromEntries(
-    Object.entries(state).filter(([_, value]) => typeof value !== 'function')
+    Object.entries(state).filter(([_, value]) => typeof value !== 'function'),
   ) as Partial<T>;
 }
 
 export function createStore<T extends object>(
   createState: StateCreator<T>,
   options: {
-    storageKey?: string;  // chrome.storage 中的 key
-    syncToStorage?: boolean;  // 是否同步到 storage
-  } = {}
+    storageKey?: string; // chrome.storage 中的 key
+    syncToStorage?: boolean; // 是否同步到 storage
+  } = {},
 ): StoreApi<T> {
   const { storageKey, syncToStorage = false } = options;
   let state: T;
@@ -40,31 +40,21 @@ export function createStore<T extends object>(
   };
 
   const syncState = (newState: T) => {
-    console.log('syncState', newState, syncToStorage, storageKey);
     if (syncToStorage && storageKey) {
       const stateToStore = stripFunctions(newState);
-      console.log('stateToStore', stateToStore);
-      chrome.storage.local.set({ [storageKey]: stateToStore }, () => {
-        if (chrome.runtime.lastError) {
-          console.error('Error setting storage:', chrome.runtime.lastError);
-        } else {
-          console.log('Storage set successfully');
-        }
-      });
+      chrome.storage.local.set({ [storageKey]: stateToStore });
     }
   };
 
   const setState: SetState<T> = (partial, replace = false) => {
-    const nextState = typeof partial === 'function'
-      ? (partial as (state: T) => T)(state)
-      : partial;
+    const nextState =
+      typeof partial === 'function'
+        ? (partial as (state: T) => T)(state)
+        : partial;
 
     if (!Object.is(nextState, state)) {
       const previousState = state;
-      state = replace
-        ? (nextState as T)
-        : Object.assign({}, state, nextState);
-      console.log('state', state);
+      state = replace ? (nextState as T) : Object.assign({}, state, nextState);
       syncState(state);
     }
   };
@@ -76,10 +66,8 @@ export function createStore<T extends object>(
       const result = await chrome.storage.local.get(storageKey);
       console.log('result', result);
       if (result[storageKey]) {
-        console.log('result[storageKey]', result[storageKey]);
-        state = { ...result[storageKey], ...createState(setState, getState) };
+        state = { ...createState(setState, getState), ...result[storageKey] };
       } else {
-        console.log('createState');
         state = createState(setState, getState);
         syncState(state);
       }
@@ -89,17 +77,18 @@ export function createStore<T extends object>(
   };
 
   const notifyListeners = (state: T, previousState: T) => {
-    listeners.forEach(listener => listener(state, previousState));
-  }
+    listeners.forEach((listener) => listener(state, previousState));
+  };
 
   // 监听 storage 变化
   if (syncToStorage && storageKey) {
     chrome.storage.onChanged.addListener((changes, areaName) => {
+      console.log('changes', changes, areaName);
       if (areaName === 'local' && changes[storageKey]) {
         const newState = changes[storageKey].newValue;
         if (!Object.is(newState, state)) {
           const previousState = state;
-          state = { ...newState, ...createState(setState, getState) };
+          state = { ...createState(setState, getState), ...newState };
           notifyListeners(state, previousState);
         }
       }
@@ -113,31 +102,34 @@ export function createStore<T extends object>(
 
 // 定义 createImpl 函数，接收 createState 函数作为参数
 const createImpl = (createState: StateCreator<T>) => {
-    // 调用 createStore 函数创建状态管理器
-    const api = createStore(createState);
-    // 返回一个函数，该函数将 api 对象传递给 useStore 函数
-    return (selector: (state: T) => U) => useStore(api, selector)
-}
+  // 调用 createStore 函数创建状态管理器
+  const api = createStore(createState);
+  // 返回一个函数，该函数将 api 对象传递给 useStore 函数
+  return (selector: (state: T) => U) => useStore(api, selector);
+};
 
-export const create = (createState: StateCreator<T>, selector: (state: T) => U) => createImpl(createState, selector);
+export const create = (
+  createState: StateCreator<T>,
+  selector: (state: T) => U,
+) => createImpl(createState, selector);
 
 // 使用 useSyncExternalStore 的新 hook
 export function useStore<T, U>(
   store: StoreApi<T>,
-  selector: (state: T) => U = state => state as unknown as U
+  selector: (state: T) => U = (state) => state as unknown as U,
 ): U {
   return useSyncExternalStore(
     store.subscribe,
     () => selector(store.getState()),
-    () => selector(store.getState()) // 服务端渲染的快照，这里使用同样的值
+    () => selector(store.getState()), // 服务端渲染的快照，这里使用同样的值
   );
 }
 
 // 创建一个支持异步初始化的 hook
 export function useAsyncStore<T, U>(
   store: StoreApi<T>,
-  selector: (state: T) => U = state => state as unknown as U,
-  fallback: U
+  selector: (state: T) => U = (state) => state as unknown as U,
+  fallback: U,
 ): U {
   const selectedState = useStore(store, selector);
   return selectedState ?? fallback;
@@ -164,8 +156,8 @@ export const recordingStore = createStore<RecordingState>(
   }),
   {
     storageKey: 'recordingState',
-    syncToStorage: true
-  }
+    syncToStorage: true,
+  },
 );
 
 // 创建弹窗相关的 store
@@ -179,12 +171,17 @@ interface PopupState {
 export const popupStore = createStore<PopupState>(
   (set) => ({
     visible: false,
-    position: { x: 100, y: 100 },
-    setVisible: (visible) => set({ visible }),
-    setPosition: (position) => set({ position }),
+    // position: { x: 100, y: 100 },
+    // status: {
+    //   isRecording: false,
+    //   isPaused: false,
+    //   isStopped: false,
+    // },
+    // setVisible: (visible) => set({ visible }),
+    // setPosition: (position) => set({ position }),
   }),
   {
     storageKey: 'popupState',
-    syncToStorage: true
-  }
+    syncToStorage: true,
+  },
 );
