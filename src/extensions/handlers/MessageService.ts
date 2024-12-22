@@ -58,6 +58,15 @@ class MessageService {
     const handlers = this.handlers.get(registry.type) || [];
     handlers.push(registry.handler);
     this.handlers.set(registry.type, handlers);
+
+    // 初始化对应类型的监听器
+    const config = this.handlerConfigs[registry.type];
+    const key = `${registry.type}:${registry.eventType}`;
+
+    // 如果该类型的监听器还没有被初始化，则初始化它
+    if (!this.listeners.has(key)) {
+      this.addListener(registry.type, registry.eventType, () => {});
+    }
   }
 
   static registerHandlers(registries: HandlerRegistry[]): void {
@@ -84,7 +93,6 @@ class MessageService {
 
         // 执行注册的 handlers
         const handlers = this.handlers.get(handlerType) || [];
-
         if (handlers.length && (!config.condition || config.condition(args[0], eventType, ...args.slice(1)))) {
           for (const handler of handlers) {
             const result = config.execute(handler, ...args);
@@ -168,11 +176,9 @@ class MessageService {
   ): void {
     const message: Message = { type, payload };
     const { callback, target = 'runtime', tabId } = options || {};
-
     if (target === 'tabs' && tabId !== undefined) {
       chrome.tabs.sendMessage(tabId, message, callback);
     } else {
-      console.log('sendRuntimeMessage', message);
       chrome.runtime.sendMessage(message, callback);
     }
   }

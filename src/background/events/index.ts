@@ -15,10 +15,12 @@ const initializeMessageHandlers = () => {
   const handlers = [
     {
       type: HandlerType.RUNTIME_MESSAGE,
+      eventType: MessageTypeEnum.START_RECORDING,
       handler: new StartRecordingHandler()
     },
     {
       type: HandlerType.RUNTIME_MESSAGE,
+      eventType: MessageTypeEnum.STOP_RECORDING,
       handler: new StopRecordingHandler()
     }
   ];
@@ -33,8 +35,7 @@ const isRestrictedUrl = (url?: string): boolean => {
 
 const handleActionClick = async (tab: chrome.tabs.Tab) => {
   const { id, url } = tab;
-  console.log("handleActionClick", id, url);
-
+  console.log('handleActionClick', id, url, stateMachine.currentState);
   // 如果当前正在录制，则暂停并跳转到编辑页面
   if (stateMachine.currentState === 'RECORDING') {
     stateMachine.transition('STOP');

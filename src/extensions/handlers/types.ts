@@ -74,5 +74,6 @@ export interface HandlerConfig {
 
 export interface HandlerRegistry {
   type: HandlerType;
+  eventType: MessageTypeEnum;
   handler: BaseHandler;
 }

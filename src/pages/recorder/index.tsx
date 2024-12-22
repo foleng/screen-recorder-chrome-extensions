@@ -1,6 +1,6 @@
 import { createRecorder, MediaType } from '@/extensions/recorder';
-import { recordingStore, useStore } from '@/extensions/store';
-import { useSessionStorageState } from 'ahooks';
+import recordingStateMachine from '@/extensions/recorder/recordingStateMachine';
+import { getQueryParam } from '@/utils';
 import { Col, Flex, Row, Typography } from 'antd';
 import { useEffect, useRef } from 'react';
 import styles from './index.less';
@@ -8,21 +8,21 @@ import styles from './index.less';
 const { Title } = Typography;
 
 const recordingMachine = recordingStateMachine();
-const recorder = createRecorder(MediaType.Screen, true);
 
 const Recorder = () => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const [recordingState, setRecordingState] = useSessionStorageState(
-    'recorderState',
-    {
-      defaultValue: false,
-    },
-  );
-  const { isRecording, setIsRecording } = useStore(recordingStore);
+  const { mediaType } = getQueryParam();
+  const recorder = createRecorder(mediaType as MediaType, true);
+  console.log('recorder', recorder);
 
-  // 获取?type 的值
-  useEffect(() => {
-    recordingMachine.on((state) => {
+
+
+  const initializeRecording = async () => {
+    let machine: StateMachine;
+    machine = await recordingStateMachine();
+
+    machine.on((state) => {
+      console.log('state', state);
       switch (state) {
         case 'RECORDING':
           recorder.startRecording();
@@ -37,7 +37,25 @@ const Recorder = () => {
           break;
       }
     });
-  }, [recordingState, setRecordingState]);
+
+    machine.transition('START');
+  };
+
+  // 获取?type 的值
+  useEffect(() => {
+    recorder.getStream().then((stream) => {
+      console.log('stream', stream);
+      const videoTrack = stream.getVideoTracks()[0];
+      if (videoTrack) {
+        videoRef.current.srcObject = stream;
+      }
+    });
+
+    initializeRecording();
+    return () => {
+      machine.stopRecording();
+    };
+  }, []);
 
   return (
     <Flex align="center" justify="center" className={styles.recorderContainer}>

@@ -18,21 +18,30 @@ type StateTransitions = {
 
 const store = createStore<{
   recordingState: RecordingState;
-}>((set) => ({
-  recordingState: 'IDLE',
-}));
+}>(
+  (set) => ({
+    recordingState: 'IDLE',
+  }),
+  {
+    storageKey: 'recordingState',
+    syncToStorage: true,
+  },
+);
 
-const recordingStateMachine = (): StateMachine => {
+const recordingStateMachine = async (): Promise<StateMachine> => {
+  await store.ready();
   // 使用代理来跟踪 currentState 的变化
   const stateProxy = new Proxy(
     {
-      _currentState: store.getState().recordingState,
+      _currentState: store.getState()?.recordingState ?? 'IDLE',
       get currentState(): RecordingState {
+        console.log('get currentState', this._currentState);
         return this._currentState as RecordingState;
       },
     },
     {
       set(target: any, prop, value) {
+        console.log('set', target, prop, value);
         if (prop === 'currentState') {
           target._currentState = value;
           // 当状态改变时，同步到 store

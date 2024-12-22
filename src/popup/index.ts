@@ -1,12 +1,12 @@
 import MessageService from '@/extensions/handlers/MessageService';
-import { ResponseType } from '@/utils/messaging';
+import { ResponseType, MessageTypeEnum } from '@/utils/messaging';
 
 // 开始录制按钮点击处理
 function handleStartRecording() {
   MessageService.sendMessage<ResponseType>(
+    MessageTypeEnum.START_RECORDING,
     {
-      type: 'START_RECORDING',
-      payload: { mediaType: 'screen' }
+      mediaType: 'screen'
     },
     (response) => {
       if (response.success) {
@@ -21,10 +21,8 @@ function handleStartRecording() {
 // 停止录制按钮点击处理
 function handleStopRecording() {
   MessageService.sendMessage<ResponseType>(
-    {
-      type: 'STOP_RECORDING',
-      payload: {}
-    },
+    MessageTypeEnum.STOP_RECORDING,
+    {},
     (response) => {
       if (response.success) {
         console.log('Recording stopped successfully');
@@ -34,3 +32,5 @@ function handleStopRecording() {
     }
   );
 }
+
+export { handleStartRecording, handleStopRecording };

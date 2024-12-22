@@ -32,22 +32,22 @@ export function createStore<T extends object>(
   let state: T;
   const listeners = new Set<(state: T, prevState: T) => void>();
 
+  // 添加初始化状态控制
+  let resolveInitialize: () => void;
+  const initializePromise = new Promise<void>((resolve) => {
+    resolveInitialize = resolve;
+  });
+
   // 添加一个简单的订阅函数，用于 useSyncExternalStore
-  const subscribe = (listener: () => void) => {
-    const wrappedListener = (state: T, prevState: T) => listener();
+  const subscribe = (listener: (state: T, prevState: T) => void) => {
+    const wrappedListener = (state: T, prevState: T) => listener(state, prevState);
     listeners.add(wrappedListener);
-    console.log('subscribe', wrappedListener, listeners);
     return () => listeners.delete(wrappedListener);
   };
 
   const syncState = (newState: T) => {
     if (syncToStorage && storageKey) {
       const stateToStore = stripFunctions(newState);
-      console.log('Syncing state to storage:', {
-        key: storageKey,
-        state: stateToStore,
-        timestamp: Date.now()
-      });
       chrome.storage.local.set({ [storageKey]: stateToStore });
     }
   };
@@ -57,7 +57,6 @@ export function createStore<T extends object>(
       typeof partial === 'function'
         ? (partial as (state: T) => T)(state)
         : partial;
-
     if (!Object.is(nextState, state)) {
       const previousState = state;
       state = replace ? (nextState as T) : Object.assign({}, state, nextState);
@@ -70,7 +69,6 @@ export function createStore<T extends object>(
   const initialize = async () => {
     if (syncToStorage && storageKey) {
       const result = await chrome.storage.local.get(storageKey);
-      console.log('result', result);
       if (result[storageKey]) {
         state = { ...createState(setState, getState), ...result[storageKey] };
       } else {
@@ -80,10 +78,10 @@ export function createStore<T extends object>(
     } else {
       state = createState(setState, getState);
     }
+    resolveInitialize();
   };
 
   const notifyListeners = (state: T, previousState: T) => {
-    console.log('notifyListeners', state, previousState, listeners, listeners.size);
     listeners.forEach((listener) => listener(state, previousState));
   };
 
@@ -91,12 +89,8 @@ export function createStore<T extends object>(
 
   // 监听 storage 变化
   if (syncToStorage && storageKey) {
-    // 添加调试日志
-    console.log('[Store Debug] Setting up storage listener for:', storageKey);
-
     // 移除之前的监听器（如果存在）
     if (storageListener) {
-      console.log('[Store Debug] Removing existing listener');
       chrome.storage.onChanged.removeListener(storageListener);
     }
 
@@ -104,11 +98,6 @@ export function createStore<T extends object>(
     storageListener = (changes: { [key: string]: chrome.storage.StorageChange }, areaName: string) => {
       // 只处理与当前 store 相关的 key 的变化
       if (areaName === 'local' && changes[storageKey]) {
-        console.log('[Store Debug] Storage change detected for:', {
-          key: storageKey,
-          newValue: changes[storageKey].newValue,
-          listenerInstance: Math.random()
-        });
 
         const newValue = changes[storageKey].newValue;
         // 避免不必要的更新
@@ -121,13 +110,12 @@ export function createStore<T extends object>(
     };
 
     // 添加监听器
-    console.log('[Store Debug] Adding new listener');
     chrome.storage.onChanged.addListener(storageListener);
   }
 
   initialize();
 
-  return { setState, getState, subscribe };
+  return { setState, getState, subscribe, ready: () => initializePromise };
 }
 
 // 定义 createImpl 函数，接收 createState 函数作为参数
@@ -189,6 +177,9 @@ export const recordingStore = createStore<RecordingState>(
     syncToStorage: true,
   },
 );
+
+console.log('recordingStore', recordingStore.getState());
+
 
 // 创建弹窗相关的 store
 interface PopupState {

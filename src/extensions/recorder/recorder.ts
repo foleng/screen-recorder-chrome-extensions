@@ -3,6 +3,8 @@ export abstract class Recorder {
   protected recordedChunks: Blob[] = [];
   protected stream: MediaStream | null = null;
   protected isPaused: boolean = false; // 添加暂停标记
+  protected streamReadyResolve: ((stream: MediaStream) => void) | null = null;
+  protected streamReadyPromise: Promise<MediaStream> | null = null;
 
   // 启动录制
   abstract startRecording(): Promise<void>;
@@ -75,12 +77,28 @@ export abstract class Recorder {
     console.log('Recording deleted and reset.');
   }
 
+  protected onStreamReady(stream: MediaStream): void {
+    if (this.streamReadyResolve) {
+      this.streamReadyResolve(stream);
+      this.streamReadyResolve = null;
+      this.streamReadyPromise = null;
+    }
+  }
+
   /**
    * 获取录制的流
    * @returns 当前的 MediaStream，如果未开始录制则返回 null
    */
-  public getStream(): MediaStream | null {
-    return this.stream;
+  public getStream(): Promise<MediaStream | null> {
+    if (this.stream) {
+      return Promise.resolve(this.stream);
+    }
+    if (this.streamReadyPromise) {
+      return this.streamReadyPromise;
+    }
+    this.streamReadyPromise = new Promise((resolve) => {
+      this.streamReadyResolve = resolve;
+    });
+    return this.streamReadyPromise;
   }
-
 }

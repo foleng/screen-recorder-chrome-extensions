@@ -19,7 +19,6 @@ export class StartRecordingHandler implements RuntimeMessageHandler {
         active: true,
       };
       createNewTab(options);
-      sendResponse({ success: true });
       return true;
     }
     return false;

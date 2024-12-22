@@ -15,12 +15,12 @@ const RecordContent: React.FC<IRecordContent> = ({ mediaType }) => {
   // 向 Background Script 发送开始录屏的消息
   function startScreenRecording() {
     // 开启录制
-    MessageService.sendMessage({
-      type: MessageTypeEnum.START_RECORDING,
-      payload: {
+    MessageService.sendMessage<ResponseType>(
+      MessageTypeEnum.START_RECORDING,
+      {
         mediaType,
       },
-    });
+    );
   }
 
   function stop() {
