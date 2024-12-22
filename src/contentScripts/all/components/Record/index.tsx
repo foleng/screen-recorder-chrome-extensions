@@ -1,35 +1,48 @@
-import React, { useState } from 'react';
+import { MediaType } from '@/extensions/recorder';
+import { recordingStore, useAsyncStore, useStore } from '@/extensions/store';
+import {
+  AppstoreOutlined,
+  CameraOutlined,
+  DesktopOutlined,
+  MobileOutlined,
+} from '@ant-design/icons';
 import { Tabs } from 'antd';
-import { DesktopOutlined, AppstoreOutlined, CameraOutlined, MobileOutlined } from '@ant-design/icons';
+import React, { useState } from 'react';
 import RecordContent from '../RecordContent';
-import { useStore, recordingStore, useAsyncStore } from '@/extensions/store';
 
 // Tab 内容组件
 const CaptureModeTabs: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<string>('screen');
-  const isRecording = useStore(recordingStore, state => state.isRecording);
-  const recordingTime = useStore(recordingStore, state => state.recordingTime);
+  const [activeTab, setActiveTab] = useState<string>(MediaType.Screen);
+  const isRecording = useStore(recordingStore, (state) => state.isRecording);
+  const recordingTime = useStore(
+    recordingStore,
+    (state) => state.recordingTime,
+  );
 
   // 如果需要处理异步初始化的情况
   const mediaType = useAsyncStore(
     recordingStore,
-    state => state.mediaType,
-    null
+    (state) => state.mediaType,
+    null,
   );
 
   // Tab 配置
   const tabConfig = [
-    { key: 'screen', label: 'Screen', icon: <DesktopOutlined /> },
-    { key: 'tab', label: 'Tab area', icon: <AppstoreOutlined /> },
-    { key: 'camera', label: 'Camera', icon: <CameraOutlined /> },
-    { key: 'mockup', label: 'Mockup', icon: <MobileOutlined /> },
+    { key: MediaType.Screen, label: 'Screen', icon: <DesktopOutlined /> },
+    { key: MediaType.Videos, label: 'Tab area', icon: <AppstoreOutlined /> },
+    { key: MediaType.Camera, label: 'Camera', icon: <CameraOutlined /> },
+    { key: MediaType.Mockup, label: 'Mockup', icon: <MobileOutlined /> },
   ];
 
   // Tab 内容配置映射
   const tabContentMap: Record<string, React.ReactNode> = {};
 
   // 渲染 Tab Item 的函数
-  const renderTabLabel = (tabKey: string, label: string, icon: React.ReactNode) => {
+  const renderTabLabel = (
+    tabKey: string,
+    label: string,
+    icon: React.ReactNode,
+  ) => {
     const isActive = activeTab === tabKey;
     return (
       <div style={tabItemStyle(isActive)}>
@@ -42,20 +55,22 @@ const CaptureModeTabs: React.FC = () => {
   const items = tabConfig.map(({ key, label, icon }) => ({
     key,
     label: renderTabLabel(key, label, icon),
-    children: tabContentMap[key] || <RecordContent mediaType={ key } />, // 根据 key 渲染对应的组件
+    children: tabContentMap[key] || <RecordContent mediaType={key} />, // 根据 key 渲染对应的组件
   }));
 
   return (
-    <Tabs
-      activeKey={activeTab}
-      onChange={setActiveTab}
-      items={items}
-      tabBarStyle={{
-        display: 'flex',
-        justifyContent: 'center',
-        borderBottom: '1px solid #d9d9d9',
-      }}
-    />
+    <div>
+      <Tabs
+        activeKey={activeTab}
+        onChange={setActiveTab}
+        items={items}
+        tabBarStyle={{
+          display: 'flex',
+          justifyContent: 'center',
+          borderBottom: '1px solid #d9d9d9',
+        }}
+      />
+    </div>
   );
 };
 
@@ -76,4 +91,3 @@ const iconStyle = (isActive: boolean) => ({
 });
 
 export default CaptureModeTabs;
-

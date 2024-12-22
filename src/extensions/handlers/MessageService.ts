@@ -172,6 +172,7 @@ class MessageService {
     if (target === 'tabs' && tabId !== undefined) {
       chrome.tabs.sendMessage(tabId, message, callback);
     } else {
+      console.log('sendRuntimeMessage', message);
       chrome.runtime.sendMessage(message, callback);
     }
   }

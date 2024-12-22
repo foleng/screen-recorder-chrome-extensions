@@ -1,10 +1,10 @@
+import { MediaType } from '@/extensions/recorder';
 import { AppstoreOutlined, VideoCameraOutlined } from '@ant-design/icons';
 import { Segmented } from 'antd';
-import React from 'react';
+import React, { useState } from 'react';
 import Record from '../Record';
-import Videos from '../Videos';
 import styles from './index.less';
-import { MediaType } from '@/extensions/recorder';
+import Videos from "../Videos";
 
 export interface MediaControlTabsProps {
   value?: MediaType; // 当前激活的选项
@@ -34,19 +34,25 @@ export const options = [
   },
 ];
 
-const MediaControlTabs: React.FC<MediaControlTabsProps> = ({
-  value,
-  onChange,
-}) => {
+const MediaControlTabs: React.FC<MediaControlTabsProps> = ({}) => {
+  const [activeTab, setActiveTab] = useState<string>(MediaType.Screen);
+
+  const ActiveComponent = options.find(
+    (option) => option.value === activeTab,
+  )?.component;
+
   return (
     <div className={styles.mediaControlTabs}>
       <Segmented
         className={styles.segmented}
-        value={value} // 使用外部传入的值
-        onChange={(val) => onChange?.(val as MediaType)} // 调用外部的 onChange 回调
+        value={activeTab} // 使用外部传入的值
+        onChange={(val) => setActiveTab(val as MediaType)} // 调用外部的 onChange 回调
         options={options}
         style={{ padding: '6px' }}
       />
+      <div className={styles.activeComponent}>
+        {ActiveComponent ? <ActiveComponent /> : null}
+      </div>
     </div>
   );
 };

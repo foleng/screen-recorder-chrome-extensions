@@ -10,6 +10,7 @@ export class StartRecordingHandler implements RuntimeMessageHandler {
     sender: chrome.runtime.MessageSender,
     sendResponse: (response: ResponseType) => void
   ): boolean {
+    console.log('StartRecordingHandler', message);
     if (message.type === MessageTypeEnum.START_RECORDING) {
       const options = {
         url: `recorder.html?mediaType=${message.payload.mediaType}`,

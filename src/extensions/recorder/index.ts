@@ -6,7 +6,8 @@ import { Recorder } from './recorder'; // 基类
 export enum MediaType {
   Screen = 'screen',
   Videos = 'videos',
-  Camera = 'camera'
+  Camera = 'camera',
+  Mockup = 'mockup',
 }
 
 // 录制器工厂

@@ -2,6 +2,7 @@ import { Button, Tooltip } from 'antd';
 import React, { useState, useEffect } from 'react';
 import { MediaType } from '@/extensions/recorder';
 import MessageService from "@/extensions/handlers/MessageService";
+import { MessageTypeEnum } from "@/extensions/handlers/types";
 
 interface IRecordContent {
   mediaType: MediaType;
