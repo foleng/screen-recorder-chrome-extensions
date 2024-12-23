@@ -1,10 +1,10 @@
 import { createStore } from '@/extensions/store';
 
-type RecordingState = 'IDLE' | 'RECORDING' | 'PAUSED' | 'STOPPED';
+type RecordingState = 'IDLE' | 'PENDING' | 'RECORDING' | 'PAUSED' | 'STOPPED';
 
-type RecordingEvent = 'START' | 'PAUSE' | 'RESUME' | 'STOP' | 'IDLE';
+type RecordingEvent = 'START' | 'PAUSE' | 'RESUME' | 'STOP' | 'IDLE' | 'CANCEL' | 'CONFIRM';
 
-interface StateMachine {
+export interface StateMachine {
   currentState: RecordingState;
   transition: (event: RecordingEvent) => void;
   on: (listener: (state: string) => void) => void;
@@ -30,6 +30,7 @@ const store = createStore<{
 
 const recordingStateMachine = async (): Promise<StateMachine> => {
   await store.ready();
+  console.log('store', store.getState());
   // 使用代理来跟踪 currentState 的变化
   const stateProxy = new Proxy(
     {
@@ -59,9 +60,19 @@ const recordingStateMachine = async (): Promise<StateMachine> => {
   const transitions: StateTransitions = {
     IDLE: {
       START: () => {
-        console.log('开始录音');
+        console.log('准备开始录音');
+        stateProxy.currentState = 'PENDING';
+      },
+    },
+    PENDING: {
+      CONFIRM: () => {
+        console.log('用户确认分享');
         stateProxy.currentState = 'RECORDING';
       },
+      CANCEL: () => {
+        console.log('用户取消分享');
+        stateProxy.currentState = 'IDLE';
+      }
     },
     RECORDING: {
       PAUSE: () => {
@@ -86,7 +97,7 @@ const recordingStateMachine = async (): Promise<StateMachine> => {
     STOPPED: {
       START: () => {
         console.log('重新开始录音');
-        stateProxy.currentState = 'RECORDING';
+        stateProxy.currentState = 'PENDING';
       },
       IDLE: () => {
         console.log('重置状态');

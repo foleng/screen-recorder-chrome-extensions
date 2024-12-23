@@ -1,3 +1,5 @@
+import { StateMachine } from "./recordingStateMachine";
+
 export abstract class Recorder {
   protected mediaRecorder: MediaRecorder | null = null;
   protected recordedChunks: Blob[] = [];
@@ -5,9 +7,14 @@ export abstract class Recorder {
   protected isPaused: boolean = false; // 添加暂停标记
   protected streamReadyResolve: ((stream: MediaStream) => void) | null = null;
   protected streamReadyPromise: Promise<MediaStream> | null = null;
+  protected machine: StateMachine;
+
+  constructor(machine: StateMachine) {
+    this.machine = machine;
+  }
 
   // 启动录制
-  abstract startRecording(): Promise<{ success: boolean; message: string }>;
+  abstract startRecording(): Promise<void>;
 
   // 停止录制
   stopRecording(): Promise<Blob> {

@@ -1,6 +1,7 @@
 import { ScreenRecorder } from './screenRecorder';
 import { CameraRecorder } from './cameraRecorder';
 import { Recorder } from './recorder'; // 基类
+import { StateMachine } from './recordingStateMachine';
 
 
 export enum MediaType {
@@ -12,20 +13,20 @@ export enum MediaType {
 
 // 录制器工厂
 interface RecorderFactory {
-  create(): Recorder;
+  create(machine: StateMachine): Recorder;
 }
 
 // 具体工厂：屏幕录制器
 class ScreenRecorderFactory implements RecorderFactory {
-  create(): Recorder {
-    return new ScreenRecorder();
+  create(machine: StateMachine): Recorder {
+    return new ScreenRecorder(machine);
   }
 }
 
 // 具体工厂：摄像头录制器
 class CameraRecorderFactory implements RecorderFactory {
-  create(): Recorder {
-    return new CameraRecorder();
+  create(machine: StateMachine): Recorder {
+    return new CameraRecorder(machine);
   }
 }
 
@@ -55,7 +56,7 @@ class RecorderFactoryProvider {
 }
 
 // 创建录制器的主函数，支持单例和多例
-export const createRecorder = (type: MediaType, useSingleton = false): Recorder => {
+export const createRecorder = (type: MediaType, machine: StateMachine, useSingleton = false): Recorder => {
   // 如果是单例模式
   if (useSingleton) {
     const existingInstance = RecorderSingletonManager.getInstance(type);
@@ -66,7 +67,7 @@ export const createRecorder = (type: MediaType, useSingleton = false): Recorder 
     const factory = RecorderFactoryProvider.getFactory(type);
     if (!factory) throw new Error('Unknown recorder type for singleton');
 
-    const instance = factory.create();
+    const instance = factory.create(machine);
     RecorderSingletonManager.setInstance(type, instance);
     return instance;
   }
@@ -75,7 +76,7 @@ export const createRecorder = (type: MediaType, useSingleton = false): Recorder 
   const factory = RecorderFactoryProvider.getFactory(type);
   if (!factory) throw new Error('Unknown recorder type for multi-instance');
 
-  return factory.create();
+  return factory.create(machine);
 };
 
 

@@ -11,7 +11,7 @@ let machine = await recordingStateMachine();
 const Recorder = () => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const { mediaType } = getQueryParam();
-  const recorder = createRecorder(mediaType as MediaType, true);
+  const recorder = createRecorder(mediaType as MediaType, machine);
   console.log('recorder', recorder);
 
 
@@ -20,13 +20,8 @@ const Recorder = () => {
     machine.on((state: string) => {
       console.log('state', state);
       switch (state) {
-        case 'RECORDING':
-          recorder.startRecording().then((res) => {
-            console.log('res', res);
-            if (!res.success) {
-              machine.transition('STOP');
-            }
-          });
+        case 'PENDING':
+          recorder.startRecording();
           break;
         case 'PAUSED':
           recorder.pauseRecording();
