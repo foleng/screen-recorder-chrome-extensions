@@ -6,8 +6,7 @@ import { useEffect, useRef } from 'react';
 import styles from './index.less';
 
 const { Title } = Typography;
-
-const recordingMachine = recordingStateMachine();
+let machine = await recordingStateMachine();
 
 const Recorder = () => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -16,20 +15,23 @@ const Recorder = () => {
   console.log('recorder', recorder);
 
 
-
   const initializeRecording = async () => {
-    let machine: StateMachine;
-    machine = await recordingStateMachine();
 
-    machine.on((state) => {
+    machine.on((state: string) => {
       console.log('state', state);
       switch (state) {
         case 'RECORDING':
-          recorder.startRecording();
+          recorder.startRecording().then((res) => {
+            console.log('res', res);
+            if (!res.success) {
+              machine.transition('STOP');
+            }
+          });
           break;
         case 'PAUSED':
           recorder.pauseRecording();
           break;
+        case 'IDLE':
         case 'STOPPED':
           recorder.stopRecording();
           break;
@@ -45,15 +47,17 @@ const Recorder = () => {
   useEffect(() => {
     recorder.getStream().then((stream) => {
       console.log('stream', stream);
-      const videoTrack = stream.getVideoTracks()[0];
-      if (videoTrack) {
-        videoRef.current.srcObject = stream;
+      if (stream) {
+        const videoTrack = stream.getVideoTracks()[0];
+        if (videoTrack && videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
       }
     });
 
     initializeRecording();
     return () => {
-      machine.stopRecording();
+      machine.transition('STOP');
     };
   }, []);
 

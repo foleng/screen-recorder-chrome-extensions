@@ -7,7 +7,7 @@ export abstract class Recorder {
   protected streamReadyPromise: Promise<MediaStream> | null = null;
 
   // 启动录制
-  abstract startRecording(): Promise<void>;
+  abstract startRecording(): Promise<{ success: boolean; message: string }>;
 
   // 停止录制
   stopRecording(): Promise<Blob> {

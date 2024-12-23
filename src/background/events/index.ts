@@ -8,7 +8,7 @@ import recordingStateMachine from "@/extensions/recorder/recordingStateMachine";
 import { createNewTab } from "@/utils";
 import { popupStore } from "@/extensions/store";
 
-const stateMachine = recordingStateMachine();
+const stateMachine = await recordingStateMachine();
 
 // 初始化消息服务和处理器
 const initializeMessageHandlers = () => {
@@ -38,7 +38,7 @@ const handleActionClick = async (tab: chrome.tabs.Tab) => {
   console.log('handleActionClick', id, url, stateMachine.currentState);
   // 如果当前正在录制，则暂停并跳转到编辑页面
   if (stateMachine.currentState === 'RECORDING') {
-    stateMachine.transition('STOP');
+    stateMachine.transition('IDLE');
     createNewTab({ url: 'editor.html' });
     return;
   }

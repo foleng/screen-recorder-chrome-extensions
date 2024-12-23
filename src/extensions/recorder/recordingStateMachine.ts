@@ -2,7 +2,7 @@ import { createStore } from '@/extensions/store';
 
 type RecordingState = 'IDLE' | 'RECORDING' | 'PAUSED' | 'STOPPED';
 
-type RecordingEvent = 'START' | 'PAUSE' | 'RESUME' | 'STOP';
+type RecordingEvent = 'START' | 'PAUSE' | 'RESUME' | 'STOP' | 'IDLE';
 
 interface StateMachine {
   currentState: RecordingState;
@@ -19,7 +19,7 @@ type StateTransitions = {
 const store = createStore<{
   recordingState: RecordingState;
 }>(
-  (set) => ({
+  () => ({
     recordingState: 'IDLE',
   }),
   {
@@ -88,11 +88,15 @@ const recordingStateMachine = async (): Promise<StateMachine> => {
         console.log('重新开始录音');
         stateProxy.currentState = 'RECORDING';
       },
+      IDLE: () => {
+        console.log('重置状态');
+        stateProxy.currentState = 'IDLE';
+      }
     },
   };
 
   const transition = (event: RecordingEvent) => {
-    const stateTransitions = transitions[stateProxy.currentState];
+    const stateTransitions = transitions[stateProxy.currentState as RecordingState];
     if (stateTransitions && stateTransitions[event]) {
       stateTransitions[event]();
     } else {
