@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Layout, Menu, Button, Divider } from 'antd';
 import { PlayCircleOutlined, DownloadOutlined, EditOutlined, QuestionCircleOutlined } from '@ant-design/icons';
-import { getVideo } from '@/extensions/storage';
+import { getLatestVideo } from '@/extensions/storage/videoStore';
 import styles from "./index.less";
 
 const { Header, Content, Footer, Sider } = Layout;
@@ -13,7 +13,7 @@ const LayoutComponent: React.FC = () => {
   useEffect(() => {
     // 假设最新的视频 ID 是 1，实际使用时需要获取正确的 ID
     const loadVideo = async () => {
-      const url = await getVideo(1);
+      const url = await getLatestVideo();
       if (url) {
         setVideoUrl(url);
       }

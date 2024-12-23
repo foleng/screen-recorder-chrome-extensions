@@ -27,8 +27,7 @@ const Recorder = () => {
         case 'PAUSED':
           recorder.pauseRecording();
           break;
-        case 'IDLE':
-        case 'STOPPED': {
+        case 'IDLE': {
           const res = await recorder.stopRecording();
           console.log('res', res);
           await addVideo(res);

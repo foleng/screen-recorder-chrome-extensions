@@ -19,14 +19,19 @@ export abstract class Recorder {
   // 停止录制
   stopRecording(): Promise<Blob> {
     console.log('stopRecording', this.machine.currentState, this.machine.transition, this.mediaRecorder);
+    debugger;
     return new Promise((resolve, reject) => {
       if (!this.mediaRecorder) {
         reject('Recorder not initialized');
         return;
       }
       this.mediaRecorder.stop();
+      console.log('stopRecording', this.mediaRecorder);
+
       this.stream?.getTracks().forEach((track) => track.stop()); // 停止所有流的轨道
+      console.log('stopRecording', this.stream);
       const blob = new Blob(this.recordedChunks, { type: 'video/webm' });
+      console.log('stopRecording', blob, this.recordedChunks);
       this.recordedChunks = []; // 清空数据
       resolve(blob);
     });
@@ -34,7 +39,9 @@ export abstract class Recorder {
 
   // 处理录制过程中的数据
   protected handleDataAvailable(event: BlobEvent): void {
+    console.log('handleDataAvailable', event);
     if (event.data.size > 0) {
+      console.log('handleDataAvailable', event.data, this.recordedChunks);
       this.recordedChunks.push(event.data);
     }
   }

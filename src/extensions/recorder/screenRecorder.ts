@@ -20,8 +20,10 @@ export class ScreenRecorder extends Recorder {
       });
       this.machine.transition('CONFIRM');
       this.mediaRecorder = new MediaRecorder(this.stream);
-      this.mediaRecorder.ondataavailable = (event) =>
+      this.mediaRecorder.ondataavailable = (event) => {
+        console.log('ondataavailable', event);
         this.handleDataAvailable(event);
+      };
       this.mediaRecorder.start();
       this.onStreamReady(this.stream);
 
