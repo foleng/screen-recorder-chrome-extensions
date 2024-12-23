@@ -4,6 +4,7 @@ import { getQueryParam } from '@/utils';
 import { Col, Flex, Row, Typography } from 'antd';
 import { useEffect, useRef } from 'react';
 import styles from './index.less';
+import { addVideo } from '@/extensions/storage';
 
 const { Title } = Typography;
 let machine = await recordingStateMachine();
@@ -17,7 +18,7 @@ const Recorder = () => {
 
   const initializeRecording = async () => {
 
-    machine.on((state: string) => {
+    machine.on(async (state: string) => {
       console.log('state', state);
       switch (state) {
         case 'PENDING':
@@ -27,9 +28,12 @@ const Recorder = () => {
           recorder.pauseRecording();
           break;
         case 'IDLE':
-        case 'STOPPED':
-          recorder.stopRecording();
+        case 'STOPPED': {
+          const res = await recorder.stopRecording();
+          console.log('res', res);
+          await addVideo(res);
           break;
+        }
         default:
           break;
       }
@@ -52,9 +56,9 @@ const Recorder = () => {
 
     initializeRecording();
     return () => {
-      machine.transition('STOP');
+      machine?.transition('STOP');
     };
-  }, []);
+  }, [recorder, machine]);
 
   return (
     <Flex align="center" justify="center" className={styles.recorderContainer}>

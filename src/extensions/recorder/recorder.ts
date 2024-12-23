@@ -18,6 +18,7 @@ export abstract class Recorder {
 
   // 停止录制
   stopRecording(): Promise<Blob> {
+    console.log('stopRecording', this.machine.currentState, this.machine.transition, this.mediaRecorder);
     return new Promise((resolve, reject) => {
       if (!this.mediaRecorder) {
         reject('Recorder not initialized');

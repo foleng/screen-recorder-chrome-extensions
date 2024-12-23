@@ -1,60 +1,33 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Layout, Menu, Button, List, Divider } from 'antd';
 import { PlayCircleOutlined, DownloadOutlined, EditOutlined, QuestionCircleOutlined } from '@ant-design/icons';
-import styles from "./index.less"
+import { getVideo } from '@/extensions/storage';
+import styles from "./index.less";
 
 const { Header, Content, Footer, Sider } = Layout;
 
-import { useEffect, useState, useRef } from 'react';
-
-/**
- * 自定义实现的 useSyncExternalStore
- * @param subscribe 订阅外部存储的变化 (如 window.resize, online 状态等)
- * @param getSnapshot 获取当前外部存储的状态值
- */
-function useSyncExternalStore<T>(
-  subscribe: (callback: () => void) => () => void,
-  getSnapshot: () => T
-): T {
-  // 1️⃣ 先获取外部存储的当前值
-  const [state, setState] = useState(getSnapshot);
-
-  // 2️⃣ 用于存储快照的 ref，用于比较是否需要更新
-  const prevSnapshotRef = useRef<T>(state);
+const LayoutComponent: React.FC = () => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    // 3️⃣ 订阅外部存储的变化
-    console.log('useSyncExternalStore');
-
-    const checkForUpdates = () => {
-      const newSnapshot = getSnapshot();
-      console.log('newSnapshot', newSnapshot);
-      if (!Object.is(prevSnapshotRef.current, newSnapshot)) {
-        prevSnapshotRef.current = newSnapshot; // 记录最新的快照
-        setState(newSnapshot); // 更新组件状态
+    // 假设最新的视频 ID 是 1，实际使用时需要获取正确的 ID
+    const loadVideo = async () => {
+      const url = await getVideo(1);
+      if (url) {
+        setVideoUrl(url);
       }
     };
+    loadVideo();
 
-    // 调用订阅函数，传入 `checkForUpdates`
-    const unsubscribe = subscribe(checkForUpdates);
+    // 清理函数
+    return () => {
+      if (videoUrl) {
+        URL.revokeObjectURL(videoUrl);
+      }
+    };
+  }, []);
 
-    // 组件卸载时，取消订阅
-    return () => unsubscribe();
-  }, [subscribe, getSnapshot]);
-
-  return state;
-}
-
-
-const subscribe = (callback: () => void) => {
-  window.addEventListener('resize', callback);
-  return () => window.removeEventListener('resize', callback); // 取消订阅
-};
-
-const getSnapshot = () => window.innerWidth;
-
-const LayoutComponent: React.FC = () => {
-  const width = useSyncExternalStore(subscribe, getSnapshot);
   const menuItems = [
     {
       title: '编辑',
@@ -89,7 +62,9 @@ const LayoutComponent: React.FC = () => {
       {/* 顶部导航 */}
       <Header style={{ background: '#f5f5f5', padding: '0 24px' }}>
         <div className="logo" style={{ float: 'left', fontSize: '18px', fontWeight: 'bold' }}>Screenity</div>
-        <div style={{ float: 'left', fontSize: '18px', fontWeight: 'bold' }}>{width}</div>
+        <div style={{ float: 'left', fontSize: '18px', fontWeight: 'bold' }}>
+          {videoUrl ? 'Recording Preview' : 'No video available'}
+        </div>
         <div style={{ float: 'right' }}>
           <Button type="link" style={{ margin: '0 8px' }}>帮助中心</Button>
           <Button type="primary" style={{ margin: '0 8px' }}>关注更新</Button>
@@ -121,10 +96,21 @@ const LayoutComponent: React.FC = () => {
           <Content style={{ padding: '24px', background: '#fafafa' }}>
             <div className="video-player" style={{ display: 'flex', justifyContent: 'center' }}>
               <div className="video" style={{ width: '80%', maxWidth: '900px', height: '500px', background: '#d9d9d9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <span style={{ color: '#999' }}>视频播放器区域</span>
+                {videoUrl ? (
+                  <video
+                    ref={videoRef}
+                    src={videoUrl}
+                    controls
+                    style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                  />
+                ) : (
+                  <span style={{ color: '#999' }}>Loading video...</span>
+                )}
               </div>
             </div>
-            <p style={{ textAlign: 'center', marginTop: '16px' }}>Screenity video - Dec 4, 2024</p>
+            <p style={{ textAlign: 'center', marginTop: '16px' }}>
+              {videoUrl ? 'Recording Preview' : 'No video available'}
+            </p>
           </Content>
         </Layout>
       </Layout>

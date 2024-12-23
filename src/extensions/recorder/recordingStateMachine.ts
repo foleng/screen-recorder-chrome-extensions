@@ -31,30 +31,21 @@ const store = createStore<{
 const recordingStateMachine = async (): Promise<StateMachine> => {
   await store.ready();
   console.log('store', store.getState());
-  // 使用代理来跟踪 currentState 的变化
-  const stateProxy = new Proxy(
-    {
-      _currentState: store.getState()?.recordingState ?? 'IDLE',
-      get currentState(): RecordingState {
-        console.log('get currentState', this._currentState);
-        return this._currentState as RecordingState;
-      },
+  // 修改 stateProxy 的实现
+  const stateProxy = {
+    _currentState: store.getState()?.recordingState ?? 'IDLE',
+    get currentState(): RecordingState {
+      // 直接从 store 获取最新状态
+      return store.getState()?.recordingState ?? 'IDLE';
     },
-    {
-      set(target: any, prop, value) {
-        console.log('set', target, prop, value);
-        if (prop === 'currentState') {
-          target._currentState = value;
-          // 当状态改变时，同步到 store
-          store.setState((state) => ({
-            ...state,
-            recordingState: value,
-          }));
-        }
-        return true;
-      },
-    },
-  );
+    set currentState(value: RecordingState) {
+      this._currentState = value;
+      store.setState((state) => ({
+        ...state,
+        recordingState: value,
+      }));
+    }
+  };
 
   // 定义状态转换规则
   const transitions: StateTransitions = {
@@ -128,7 +119,8 @@ const recordingStateMachine = async (): Promise<StateMachine> => {
 
   return {
     get currentState() {
-      return stateProxy.currentState;
+      // 直接从 store 获取最新状态
+      return store.getState()?.recordingState ?? 'IDLE';
     },
     transition,
     on,
