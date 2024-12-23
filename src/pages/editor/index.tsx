@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Layout, Menu, Button, List, Divider } from 'antd';
+import { Layout, Menu, Button, Divider } from 'antd';
 import { PlayCircleOutlined, DownloadOutlined, EditOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 import { getVideo } from '@/extensions/storage';
 import styles from "./index.less";
@@ -58,26 +58,22 @@ const LayoutComponent: React.FC = () => {
   ];
 
   return (
-    <Layout style={{ minHeight: '100vh' }}>
-      {/* 顶部导航 */}
-      <Header style={{ background: '#f5f5f5', padding: '0 24px' }}>
-        <div className="logo" style={{ float: 'left', fontSize: '18px', fontWeight: 'bold' }}>Screenity</div>
-        <div style={{ float: 'left', fontSize: '18px', fontWeight: 'bold' }}>
+    <Layout className={styles.layout}>
+      <Header className={styles.header}>
+        <div className={styles.logo}>Screenity</div>
+        <div className={styles.title}>
           {videoUrl ? 'Recording Preview' : 'No video available'}
         </div>
-        <div style={{ float: 'right' }}>
-          <Button type="link" style={{ margin: '0 8px' }}>帮助中心</Button>
-          <Button type="primary" style={{ margin: '0 8px' }}>关注更新</Button>
+        <div className={styles.actions}>
+          <Button type="link" className={styles.actionButton}>帮助中心</Button>
+          <Button type="primary" className={styles.actionButton}>关注更新</Button>
         </div>
-
       </Header>
 
-      {/* 主内容部分 */}
       <Layout>
-        {/* 左侧菜单栏 */}
-        <Sider width={250} style={{ background: '#fafafa', padding: '24px' }}>
+        <Sider width={250} className={styles.sider}>
           {menuItems.map((menu, index) => (
-            <div key={index} className="menu-section" style={{ marginBottom: '24px' }}>
+            <div key={index} className={styles.menuSection}>
               <Divider orientation="left">{menu.title}</Divider>
               <Menu
                 mode="vertical"
@@ -91,32 +87,30 @@ const LayoutComponent: React.FC = () => {
           ))}
         </Sider>
 
-        {/* 右侧视频内容区域 */}
-        <Layout style={{ padding: '0 24px' }}>
-          <Content style={{ padding: '24px', background: '#fafafa' }}>
-            <div className="video-player" style={{ display: 'flex', justifyContent: 'center' }}>
-              <div className="video" style={{ width: '80%', maxWidth: '900px', height: '500px', background: '#d9d9d9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Layout>
+          <Content className={styles.content}>
+            <div className={styles.videoPlayer}>
+              <div className={styles.video}>
                 {videoUrl ? (
                   <video
                     ref={videoRef}
                     src={videoUrl}
                     controls
-                    style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                    className={styles.videoElement}
                   />
                 ) : (
-                  <span style={{ color: '#999' }}>Loading video...</span>
+                  <span className={styles.loading}>Loading video...</span>
                 )}
               </div>
             </div>
-            <p style={{ textAlign: 'center', marginTop: '16px' }}>
+            <p className={styles.videoTitle}>
               {videoUrl ? 'Recording Preview' : 'No video available'}
             </p>
           </Content>
         </Layout>
       </Layout>
 
-      {/* 底部 */}
-      <Footer style={{ textAlign: 'center', background: '#f5f5f5', padding: '16px' }}>
+      <Footer className={styles.footer}>
         <Button shape="circle" icon={<QuestionCircleOutlined />} />
       </Footer>
     </Layout>
