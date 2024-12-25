@@ -24,6 +24,7 @@ export class ScreenRecorder extends Recorder {
         console.log('ondataavailable', event);
         this.handleDataAvailable(event);
       };
+      console.log('this.mediaRecorder', this.mediaRecorder);
       this.mediaRecorder.start();
       this.onStreamReady(this.stream);
 

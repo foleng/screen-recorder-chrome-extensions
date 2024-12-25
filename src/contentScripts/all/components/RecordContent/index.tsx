@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { MediaType } from '@/extensions/recorder';
 import MessageService from "@/extensions/handlers/MessageService";
 import { MessageTypeEnum } from "@/extensions/handlers/types";
+import { useStore, popupStore } from '@/extensions/store';
 
 interface IRecordContent {
   mediaType: MediaType;
@@ -11,11 +12,12 @@ interface IRecordContent {
 const RecordContent: React.FC<IRecordContent> = ({ mediaType }) => {
   const [cameraAccess, setCameraAccess] = useState(false);
   const [microphoneAccess, setMicrophoneAccess] = useState(false);
+  const setVisible = useStore(popupStore, (state) => state.setVisible);
 
   // 向 Background Script 发送开始录屏的消息
   function startScreenRecording() {
     // 开启录制
-    MessageService.sendMessage<ResponseType>(
+    MessageService.sendMessage(
       MessageTypeEnum.START_RECORDING,
       {
         mediaType,
@@ -23,12 +25,9 @@ const RecordContent: React.FC<IRecordContent> = ({ mediaType }) => {
     );
   }
 
-  function stop() {
-    // 停止录制
-  }
-
   const handleStartRecording = () => {
     startScreenRecording();
+    setVisible(false);
   };
 
   useEffect(() => {

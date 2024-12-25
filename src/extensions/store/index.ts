@@ -40,7 +40,8 @@ export function createStore<T extends object>(
 
   // 添加一个简单的订阅函数，用于 useSyncExternalStore
   const subscribe = (listener: (state: T, prevState: T) => void) => {
-    const wrappedListener = (state: T, prevState: T) => listener(state, prevState);
+    const wrappedListener = (state: T, prevState: T) =>
+      listener(state, prevState);
     listeners.add(wrappedListener);
     return () => listeners.delete(wrappedListener);
   };
@@ -85,7 +86,8 @@ export function createStore<T extends object>(
     listeners.forEach((listener) => listener(state, previousState));
   };
 
-  let storageListener: ((changes: object, areaName: string) => void) | null = null;
+  let storageListener: ((changes: object, areaName: string) => void) | null =
+    null;
 
   // 监听 storage 变化
   if (syncToStorage && storageKey) {
@@ -95,10 +97,12 @@ export function createStore<T extends object>(
     }
 
     // 创建新的监听器
-    storageListener = (changes: { [key: string]: chrome.storage.StorageChange }, areaName: string) => {
+    storageListener = (
+      changes: { [key: string]: chrome.storage.StorageChange },
+      areaName: string,
+    ) => {
       // 只处理与当前 store 相关的 key 的变化
       if (areaName === 'local' && changes[storageKey]) {
-
         const newValue = changes[storageKey].newValue;
         // 避免不必要的更新
         if (!Object.is(newValue, stripFunctions(state))) {
@@ -180,7 +184,6 @@ export const recordingStore = createStore<RecordingState>(
 
 console.log('recordingStore', recordingStore.getState());
 
-
 // 创建弹窗相关的 store
 interface PopupState {
   visible: boolean;
@@ -188,18 +191,12 @@ interface PopupState {
   setVisible: (visible: boolean) => void;
   setPosition: (position: { x: number; y: number }) => void;
 }
-
 export const popupStore = createStore<PopupState>(
   (set) => ({
     visible: false,
-    // position: { x: 100, y: 100 },
-    // status: {
-    //   isRecording: false,
-    //   isPaused: false,
-    //   isStopped: false,
-    // },
-    // setVisible: (visible) => set({ visible }),
-    // setPosition: (position) => set({ position }),
+    position: { x: 100, y: 100 },
+    setVisible: (visible) => set({ visible }),
+    setPosition: (position) => set({ position }),
   }),
   {
     storageKey: 'popupState',
