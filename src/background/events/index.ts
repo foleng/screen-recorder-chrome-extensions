@@ -40,8 +40,6 @@ const handleActionClick = async (tab: chrome.tabs.Tab) => {
     stateMachine.transition('STOP');
     stateMachine.transition('IDLE');
 
-
-
     // 打开编辑页面
     createNewTab({ url: 'editor.html' });
     return;

@@ -130,7 +130,7 @@ export function useStore<T, U>(
   return useSyncExternalStore(
     store.subscribe,
     () => selector(store.getState()),
-    () => selector(store.getState()), // 服���端渲染的快照，这里使用同样的值
+    () => selector(store.getState()), // 服端渲染的快照，这里使用同样的值
   );
 }
 
@@ -163,10 +163,11 @@ export function useAsyncStore<T, U>(
 interface RecordingState {
   isRecording: boolean;
   mediaType: MediaType | null;
-  recordingTime: number;
+  recordingTime: number;  // 录制时长（秒）
   setIsRecording: (isRecording: boolean) => void;
   setMediaType: (mediaType: MediaType | null) => void;
   setRecordingTime: (time: number) => void;
+  resetRecordingTime: () => void;  // 重置计时器
 }
 
 export const recordingStore = createStore<RecordingState>(
@@ -177,6 +178,7 @@ export const recordingStore = createStore<RecordingState>(
     setIsRecording: (isRecording) => set({ isRecording }),
     setMediaType: (mediaType) => set({ mediaType }),
     setRecordingTime: (time) => set({ recordingTime: time }),
+    resetRecordingTime: () => set({ recordingTime: 0 }),
   }),
   {
     storageKey: 'recordingState',
