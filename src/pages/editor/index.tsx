@@ -6,6 +6,35 @@ import styles from "./index.less";
 
 const { Header, Content, Footer, Sider } = Layout;
 
+const menuItems = [
+  {
+    title: '编辑',
+    items: [
+      { label: '编辑视频', icon: <EditOutlined /> },
+      { label: '裁剪', icon: <EditOutlined /> },
+      { label: '添加音频', icon: <EditOutlined /> },
+    ],
+  },
+  {
+    title: '保存',
+    items: [{ label: '保存到云盘', icon: <PlayCircleOutlined /> }],
+  },
+  {
+    title: '导出',
+    items: [
+      { label: '导出为 MP4', icon: <DownloadOutlined /> },
+      { label: '导出为 WebM', icon: <DownloadOutlined /> },
+    ],
+  },
+  {
+    title: '高级',
+    items: [
+      { label: '下载源文件', icon: <DownloadOutlined /> },
+      { label: '反馈问题', icon: <QuestionCircleOutlined /> },
+    ],
+  },
+];
+
 const LayoutComponent: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
@@ -28,41 +57,12 @@ const LayoutComponent: React.FC = () => {
     };
   }, []);
 
-  const menuItems = [
-    {
-      title: '编辑',
-      items: [
-        { label: '编辑视频', icon: <EditOutlined /> },
-        { label: '裁剪', icon: <EditOutlined /> },
-        { label: '添加音频', icon: <EditOutlined /> },
-      ],
-    },
-    {
-      title: '保存',
-      items: [{ label: '登录并保存到 Drive', icon: <PlayCircleOutlined /> }],
-    },
-    {
-      title: '导出',
-      items: [
-        { label: '下载为 .mp4', icon: <DownloadOutlined /> },
-        { label: '下载为 .webm', icon: <DownloadOutlined /> },
-      ],
-    },
-    {
-      title: '高级',
-      items: [
-        { label: '下载视频和源文件', icon: <DownloadOutlined /> },
-        { label: '报告相关的编码和特性问题', icon: <QuestionCircleOutlined /> },
-      ],
-    },
-  ];
-
   return (
     <Layout className={styles.layout}>
       <Header className={styles.header}>
         <div className={styles.logo}>Screenity</div>
         <div className={styles.title}>
-          {videoUrl ? 'Recording Preview' : 'No video available'}
+          {videoUrl ? '录制预览' : '暂无视频'}
         </div>
         <div className={styles.actions}>
           <Button type="link" className={styles.actionButton}>帮助中心</Button>
@@ -99,12 +99,12 @@ const LayoutComponent: React.FC = () => {
                     className={styles.videoElement}
                   />
                 ) : (
-                  <span className={styles.loading}>Loading video...</span>
+                  <span className={styles.loading}>正在加载视频...</span>
                 )}
               </div>
             </div>
             <p className={styles.videoTitle}>
-              {videoUrl ? 'Recording Preview' : 'No video available'}
+              {videoUrl ? '录制预览' : '暂无视频'}
             </p>
           </Content>
         </Layout>

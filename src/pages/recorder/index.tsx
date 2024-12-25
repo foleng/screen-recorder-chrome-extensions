@@ -19,7 +19,6 @@ const Recorder = () => {
   const initializeRecording = async () => {
 
     machine.on(async (state: string) => {
-      console.log('state', state);
       switch (state) {
         case 'PENDING':
           recorder.startRecording();
@@ -29,7 +28,6 @@ const Recorder = () => {
           break;
         case 'IDLE': {
           const res = await recorder.stopRecording();
-          console.log('res', res);
           await addVideo(res);
           break;
         }

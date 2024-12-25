@@ -35,11 +35,11 @@ const isRestrictedUrl = (url?: string): boolean => {
 
 const handleActionClick = async (tab: chrome.tabs.Tab) => {
   const { id, url } = tab;
-  console.log('handleActionClick', id, url, stateMachine.currentState);
   // 如果当前正在录制，则暂停并跳转到编辑页面
   if (stateMachine.currentState === 'RECORDING') {
     stateMachine.transition('STOP');
     stateMachine.transition('IDLE');
+    // 关闭recorder页面, 然后打开编辑页面
     createNewTab({ url: 'editor.html' });
     return;
   }
