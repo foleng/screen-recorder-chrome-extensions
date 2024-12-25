@@ -2,6 +2,9 @@ import { defineConfig } from '@umijs/max';
 
 export default defineConfig({
   plugins: [require.resolve('umi-plugin-extensions')],
+  mpa: {
+    template: 'src/template/index.html',
+  },
   extensions: {
     name: 'Umi Chrome Extension Template',
     description: '基于 Umi 的 Chrome 插件开发脚手架',

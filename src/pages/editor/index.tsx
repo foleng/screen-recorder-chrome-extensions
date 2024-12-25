@@ -39,7 +39,17 @@ const LayoutComponent: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
 
+  const closeRecorder = async () => {
+    const tabs = await chrome.tabs.query({ url: chrome.runtime.getURL('recorder.html*') });
+    if (tabs[0]?.id) {
+      await chrome.tabs.remove(tabs[0].id);
+    }
+  }
+
   useEffect(() => {
+    // 查找并关闭 recorder 页面
+    closeRecorder();
+
     // 假设最新的视频 ID 是 1，实际使用时需要获取正确的 ID
     const loadVideo = async () => {
       const url = await getLatestVideo();

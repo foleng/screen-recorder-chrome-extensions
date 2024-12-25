@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react';
+import { MediaType } from '../recorder';
 
 type SetState<T> = (
   partial: T | Partial<T> | ((state: T) => T | Partial<T>),
@@ -59,7 +60,6 @@ export function createStore<T extends object>(
         ? (partial as (state: T) => T)(state)
         : partial;
     if (!Object.is(nextState, state)) {
-      const previousState = state;
       state = replace ? (nextState as T) : Object.assign({}, state, nextState);
       syncState(state);
     }
@@ -122,6 +122,18 @@ export function createStore<T extends object>(
   return { setState, getState, subscribe, ready: () => initializePromise };
 }
 
+// 使用 useSyncExternalStore 的新 hook
+export function useStore<T, U>(
+  store: StoreApi<T>,
+  selector: (state: T) => U = (state) => state as unknown as U,
+): U {
+  return useSyncExternalStore(
+    store.subscribe,
+    () => selector(store.getState()),
+    () => selector(store.getState()), // 服���端渲染的快照，这里使用同样的值
+  );
+}
+
 // 定义 createImpl 函数，接收 createState 函数作为参数
 const createImpl = (createState: StateCreator<T>) => {
   // 调用 createStore 函数创建状态管理器
@@ -135,17 +147,7 @@ export const create = (
   selector: (state: T) => U,
 ) => createImpl(createState, selector);
 
-// 使用 useSyncExternalStore 的新 hook
-export function useStore<T, U>(
-  store: StoreApi<T>,
-  selector: (state: T) => U = (state) => state as unknown as U,
-): U {
-  return useSyncExternalStore(
-    store.subscribe,
-    () => selector(store.getState()),
-    () => selector(store.getState()), // 服���端渲染的快照，这里使用同样的值
-  );
-}
+
 
 // 创建一个支持异步初始化的 hook
 export function useAsyncStore<T, U>(
