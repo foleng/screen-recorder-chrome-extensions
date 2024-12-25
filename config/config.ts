@@ -35,10 +35,10 @@ export default defineConfig({
     ],
 
     icons: {
-      16: 'logo/logo@16.png',
-      32: 'logo/logo@32.png',
-      48: 'logo/logo@48.png',
-      128: 'logo/logo@128.png',
+      16: 'logo/16.png',
+      32: 'logo/32.png',
+      48: 'logo/48.png',
+      128: 'logo/128.png',
     },
   },
 });
