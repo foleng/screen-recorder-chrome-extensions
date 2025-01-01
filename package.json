@@ -41,6 +41,8 @@
     ]
   },
   "dependencies": {
+    "@ffmpeg/core": "^0.11.0",
+    "@ffmpeg/ffmpeg": "^0.11.0",
     "ahooks": "^3.8.1",
     "antd": "^5",
     "dexie": "^4.0.10",
