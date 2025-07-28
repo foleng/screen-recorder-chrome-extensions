@@ -2,15 +2,22 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: #1e1e1e;
-  color: #fff;
+  background: #fff;
+  color: #333;
 
   .toolbar {
-    padding: 8px;
-    background: #2d2d2d;
-    border-bottom: 1px solid #3d3d3d;
+    padding: 12px;
+    background: #f5f5f5;
+    border-bottom: 1px solid #e8e8e8;
     display: flex;
-    gap: 8px;
+    gap: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+
+    :global {
+      .ant-btn {
+        border-radius: 4px;
+      }
+    }
   }
 
   .timeline {
@@ -19,10 +26,10 @@
     overflow: hidden;
 
     .timelineRuler {
-      height: 24px;
-      background: #2d2d2d;
+      height: 30px;
+      background: #fafafa;
       position: relative;
-      border-bottom: 1px solid #3d3d3d;
+      border-bottom: 1px solid #e8e8e8;
 
       .marker {
         position: absolute;
@@ -31,13 +38,13 @@
 
         .markerLine {
           width: 1px;
-          height: 8px;
-          background: #666;
+          height: 12px;
+          background: #ccc;
         }
 
         .markerTime {
-          font-size: 10px;
-          color: #999;
+          font-size: 12px;
+          color: #666;
           transform: translateX(-50%);
           margin-top: 2px;
         }
@@ -46,39 +53,45 @@
 
     .tracks {
       overflow-y: auto;
-      height: calc(100% - 24px);
+      height: calc(100% - 30px);
 
       .track {
         height: 80px;
-        border-bottom: 1px solid #3d3d3d;
+        border-bottom: 1px solid #e8e8e8;
         display: flex;
 
         .trackHeader {
           width: 120px;
-          padding: 8px;
-          background: #2d2d2d;
-          border-right: 1px solid #3d3d3d;
+          padding: 12px;
+          background: #fafafa;
+          border-right: 1px solid #e8e8e8;
           display: flex;
           justify-content: space-between;
           align-items: center;
+          font-weight: 500;
         }
 
         .trackContent {
           flex: 1;
           position: relative;
-          background: #252525;
+          background: #fff;
 
           .clip {
             position: absolute;
             height: 100%;
-            background: #4a4a4a;
-            border: 1px solid #666;
+            background: #e6f7ff;
+            border: 1px solid #91d5ff;
             border-radius: 4px;
             cursor: move;
             overflow: hidden;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s ease;
 
             &:hover {
-              background: #5a5a5a;
+              background: #bae7ff;
+              border-color: #40a9ff;
+              transform: scale(1.02);
+              z-index: 10;
             }
 
             .clipThumbnail {
@@ -87,6 +100,7 @@
               display: flex;
               align-items: center;
               justify-content: center;
+              background: #f0f9ff;
 
               video {
                 width: 100%;
@@ -97,15 +111,26 @@
               .waveform {
                 width: 100%;
                 height: 40px;
-                background: linear-gradient(#666, #444);
+                background: linear-gradient(to bottom, #40a9ff, #1890ff);
+                border-radius: 2px;
               }
             }
 
             .clipText {
-              padding: 4px;
-              font-size: 12px;
-              color: #fff;
+              padding: 8px;
+              font-size: 14px;
+              color: #1890ff;
+              font-weight: 500;
             }
+          }
+          
+          .emptyTrack {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #999;
+            font-size: 14px;
           }
         }
       }
@@ -113,16 +138,16 @@
   }
 
   .controls {
-    padding: 8px;
-    background: #2d2d2d;
-    border-top: 1px solid #3d3d3d;
+    padding: 12px;
+    background: #f5f5f5;
+    border-top: 1px solid #e8e8e8;
 
     :global {
       .ant-slider {
         margin: 6px 12px;
 
         .ant-slider-rail {
-          background-color: #666;
+          background-color: #e8e8e8;
         }
 
         .ant-slider-track {

@@ -7,17 +7,25 @@ import recordingStateMachine from '@/extensions/recorder/recordingStateMachine';
 export class StartRecordingHandler implements RuntimeMessageHandler {
   handleRuntimeMessage(
     message: Message,
+    sender: chrome.runtime.MessageSender,
+    sendResponse: (response: ResponseType) => void
   ): boolean {
     console.log('StartRecordingHandler', message);
     if (message.type === MessageTypeEnum.START_RECORDING) {
-      const options = {
-        url: `recorder.html?mediaType=${message.payload?.mediaType}`,
-        pinned: true,
-        index: 0,
-        active: true,
-      };
-      createNewTab(options);
-      return true;
+      try {
+        const options = {
+          url: `recorder.html?mediaType=${message.payload?.mediaType}`,
+          pinned: true,
+          index: 0,
+          active: true,
+        };
+        createNewTab(options);
+        sendResponse({ success: true });
+        return true;
+      } catch (error) {
+        sendResponse({ success: false, error: error instanceof Error ? error.message : 'Unknown error' });
+        return true;
+      }
     }
     return false;
   }

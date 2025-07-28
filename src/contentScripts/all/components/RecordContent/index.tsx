@@ -22,6 +22,13 @@ const RecordContent: React.FC<IRecordContent> = ({ mediaType }) => {
       {
         mediaType,
       },
+      {
+        callback: (response) => {
+          if (response && !response.success) {
+            console.error('Failed to start recording:', response.error);
+          }
+        }
+      }
     );
   }
 

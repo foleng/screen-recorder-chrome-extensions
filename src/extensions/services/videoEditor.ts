@@ -22,11 +22,17 @@ export class VideoEditor {
   async init() {
     if (!this.isLoaded) {
       try {
+        // 检查是否已经在加载中
+        if (ffmpeg.isLoaded()) {
+          this.isLoaded = true;
+          return;
+        }
+        
         await ffmpeg.load();
         this.isLoaded = true;
       } catch (error) {
         console.error('Failed to load FFmpeg:', error);
-        throw new Error('Failed to initialize video editor');
+        throw new Error('Failed to initialize video editor: ' + (error instanceof Error ? error.message : 'Unknown error'));
       }
     }
   }
@@ -34,6 +40,11 @@ export class VideoEditor {
   async trimVideo(inputUrl: string, startTime: number, duration: number) {
     await this.init();
     try {
+      // 确保FFmpeg已加载
+      if (!ffmpeg.isLoaded()) {
+        throw new Error('FFmpeg not loaded');
+      }
+      
       const inputBlob = await fetch(inputUrl).then(r => r.blob());
       ffmpeg.FS('writeFile', 'input.mp4', await fetchFile(inputBlob));
 
@@ -49,7 +60,7 @@ export class VideoEditor {
       return URL.createObjectURL(new Blob([data.buffer], { type: 'video/mp4' }));
     } catch (error) {
       console.error('Error in trimVideo:', error);
-      throw new Error('Failed to trim video');
+      throw new Error('Failed to trim video: ' + (error instanceof Error ? error.message : 'Unknown error'));
     } finally {
       try {
         // Clean up files
@@ -64,6 +75,11 @@ export class VideoEditor {
   async addAudio(videoUrl: string, audioFile: File) {
     await this.init();
     try {
+      // 确保FFmpeg已加载
+      if (!ffmpeg.isLoaded()) {
+        throw new Error('FFmpeg not loaded');
+      }
+      
       const videoBlob = await fetch(videoUrl).then(r => r.blob());
 
       ffmpeg.FS('writeFile', 'input.mp4', await fetchFile(videoBlob));
@@ -83,7 +99,7 @@ export class VideoEditor {
       return URL.createObjectURL(new Blob([data.buffer], { type: 'video/mp4' }));
     } catch (error) {
       console.error('Error in addAudio:', error);
-      throw new Error('Failed to add audio');
+      throw new Error('Failed to add audio: ' + (error instanceof Error ? error.message : 'Unknown error'));
     } finally {
       try {
         // Clean up files
@@ -99,6 +115,11 @@ export class VideoEditor {
   async exportVideo(videoUrl: string, format: 'mp4' | 'webm') {
     await this.init();
     try {
+      // 确保FFmpeg已加载
+      if (!ffmpeg.isLoaded()) {
+        throw new Error('FFmpeg not loaded');
+      }
+      
       const videoBlob = await fetch(videoUrl).then(r => r.blob());
       ffmpeg.FS('writeFile', 'input.mp4', await fetchFile(videoBlob));
 
@@ -124,7 +145,7 @@ export class VideoEditor {
       return URL.createObjectURL(new Blob([data.buffer], { type: `video/${format}` }));
     } catch (error) {
       console.error('Error in exportVideo:', error);
-      throw new Error(`Failed to export video as ${format}`);
+      throw new Error(`Failed to export video as ${format}: ` + (error instanceof Error ? error.message : 'Unknown error'));
     } finally {
       try {
         // Clean up files
