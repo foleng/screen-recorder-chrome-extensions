@@ -18,7 +18,7 @@ export default defineConfig({
       type: 'browserAction',
     },
     contentScripts: [
-      { matches: ['<all_urls>'], entries: ['@/contentScripts/all'] },
+      { matches: ['<all_urls>'], entries: ['@/contentScripts/all'], runAt: 'document_start' },
     ],
     host_permissions: ['<all_urls>'],
     permissions: [
